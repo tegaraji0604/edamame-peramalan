@@ -39,3 +39,11 @@ query
 *.log
 *.png
 !static/**/*.png
+
+# ── Expo / React Native ────────────────
+edamameApp/node_modules/
+edamameApp/.expo/
+edamameApp/dist/
+edamameApp/.env
+edamameApp/android/
+edamameApp/ios/
