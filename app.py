@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from functools import wraps
-import mysql.connector
-from mysql.connector import Error
+import re as _re
+import sqlite3 as _sqlite3
 import bcrypt
 import pandas as pd
 import numpy as np
@@ -82,20 +82,113 @@ def load_hasil_tmp():
 #   MYSQL_USER     = (dari Aiven)
 #   MYSQL_PASSWORD = (dari Aiven)
 #   MYSQL_DATABASE = (dari Aiven, default: defaultdb)
-DB_CONFIG = {
-    'host':     os.environ.get('MYSQL_HOST', 'localhost'),
-    'port':     int(os.environ.get('MYSQL_PORT', 3306)),
-    'user':     os.environ.get('MYSQL_USER', 'root'),
-    'password': os.environ.get('MYSQL_PASSWORD', ''),
-    'database': os.environ.get('MYSQL_DATABASE', 'edamame_peramalan'),
-}
-# Aiven MySQL wajib SSL — tambahkan ssl config kalau di production
-if os.environ.get('MYSQL_HOST'):
-    DB_CONFIG['ssl_disabled'] = False
+# ── DB Mode: SQLite (default) atau MySQL (kalau ada MYSQL_HOST) ──────────────
+_USE_MYSQL = bool(os.environ.get('MYSQL_HOST'))
 
-def get_db():
-    try:   return mysql.connector.connect(**DB_CONFIG)
-    except Error as e: print(f"[DB] {e}"); return None
+if _USE_MYSQL:
+    import mysql.connector
+    from mysql.connector import Error
+    DB_CONFIG = {
+        'host':     os.environ.get('MYSQL_HOST', 'localhost'),
+        'port':     int(os.environ.get('MYSQL_PORT', 3306)),
+        'user':     os.environ.get('MYSQL_USER', 'root'),
+        'password': os.environ.get('MYSQL_PASSWORD', ''),
+        'database': os.environ.get('MYSQL_DATABASE', 'edamame_peramalan'),
+        'ssl_disabled': False,
+    }
+    def get_db():
+        try:   return mysql.connector.connect(**DB_CONFIG)
+        except Error as e: print(f"[DB] {e}"); return None
+else:
+    # ── SQLite Adapter ────────────────────────────────────────────────────────
+    _DB_PATH = os.path.join(os.path.dirname(__file__), 'edamame.db')
+
+    class _SQLiteConnection:
+        """Wraps sqlite3.connect() to mimic mysql.connector interface."""
+        def __init__(self):
+            self._cn = _sqlite3.connect(_DB_PATH, check_same_thread=False)
+            self._cn.row_factory = _sqlite3.Row
+            self._cn.execute("PRAGMA journal_mode=WAL")
+
+        def cursor(self, dictionary=False, buffered=False):
+            return _SQLiteCursor(self._cn.cursor(), dictionary=dictionary)
+
+        def commit(self):   self._cn.commit()
+        def close(self):    self._cn.close()
+        def is_connected(self):
+            try: self._cn.execute("SELECT 1"); return True
+            except Exception: return False
+
+    class _SQLiteCursor:
+        """Cursor adapter: translates MySQL SQL to SQLite on-the-fly."""
+        def __init__(self, cur, dictionary=False):
+            self._cur  = cur
+            self._dict = dictionary
+            self.lastrowid  = None
+            self.rowcount   = 0
+            self._fake_rows = None
+
+        @staticmethod
+        def _adapt(q):
+            # ON DUPLICATE KEY UPDATE → INSERT OR REPLACE (remove UPDATE clause)
+            if _re.search(r'ON\s+DUPLICATE\s+KEY\s+UPDATE', q, _re.I):
+                q = _re.sub(r'\s*ON\s+DUPLICATE\s+KEY\s+UPDATE[\s\S]*', '', q)
+                q = _re.sub(r'\bINSERT\s+INTO\b', 'INSERT OR REPLACE INTO', q, flags=_re.I)
+            # %s → ?
+            q = q.replace('%s', '?')
+            # ENGINE=... → remove
+            q = _re.sub(r'\s*ENGINE\s*=\s*\w+', '', q, flags=_re.I)
+            # INT AUTO_INCREMENT PRIMARY KEY → INTEGER PRIMARY KEY AUTOINCREMENT
+            q = _re.sub(r'\bINT\s+AUTO_INCREMENT\s+PRIMARY\s+KEY\b',
+                        'INTEGER PRIMARY KEY AUTOINCREMENT', q, flags=_re.I)
+            # ALTER TABLE t CHANGE old new TYPE → RENAME COLUMN (SQLite 3.25+)
+            q = _re.sub(
+                r'ALTER\s+TABLE\s+(\w+)\s+CHANGE\s+(\w+)\s+(\w+)\s+[^;]*',
+                lambda m: f'ALTER TABLE {m.group(1)} RENAME COLUMN {m.group(2)} TO {m.group(3)}',
+                q, flags=_re.I
+            )
+            return q
+
+        def execute(self, query, params=None):
+            # SHOW COLUMNS FROM tbl → PRAGMA table_info(tbl)
+            m = _re.match(r'\s*SHOW\s+COLUMNS\s+FROM\s+(\w+)', query, _re.I)
+            if m:
+                self._cur.execute(f'PRAGMA table_info({m.group(1)})')
+                # row[1] = name; mimic MySQL SHOW COLUMNS: (Field, Type, Null, Key, Default, Extra)
+                self._fake_rows = [(r[1], r[2], 'YES', '', r[4], '') for r in self._cur.fetchall()]
+                self.rowcount = len(self._fake_rows)
+                return
+            self._fake_rows = None
+            query = self._adapt(query)
+            try:
+                self._cur.execute(query, params) if params else self._cur.execute(query)
+            except Exception as e:
+                print(f'[SQLite] {e} | Q: {query[:120]}')
+                raise
+            self.lastrowid = self._cur.lastrowid
+            self.rowcount  = self._cur.rowcount
+
+        def fetchall(self):
+            if self._fake_rows is not None:
+                r, self._fake_rows = self._fake_rows, None
+                return r
+            rows = self._cur.fetchall()
+            return [dict(r) for r in rows] if self._dict else [tuple(r) for r in rows]
+
+        def fetchone(self):
+            if self._fake_rows is not None:
+                r = self._fake_rows[0] if self._fake_rows else None
+                self._fake_rows = None
+                return r
+            row = self._cur.fetchone()
+            if row is None: return None
+            return dict(row) if self._dict else tuple(row)
+
+        def close(self): self._cur.close()
+
+    def get_db():
+        try:    return _SQLiteConnection()
+        except Exception as e: print(f'[DB] {e}'); return None
 
 def init_db():
     conn = get_db()
