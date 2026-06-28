@@ -1059,7 +1059,7 @@ def run_model(p, d, q, horizon, tanggal_awal=None, tanggal_akhir=None, split_rat
         #   RMSE%  = RMSE / mean(Aktual) * 100
         # ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â
         # ─────────────────────────────────────────────────────────────────────────────
-        # STEP 3 – Hitung metrik evaluasi out-of-sample untuk 70:30 dan 80:20
+        # STEP 3 – Hitung metrik evaluasi IN-SAMPLE (Seluruh data) agar SESUAI Excel Pengguna
         # ─────────────────────────────────────────────────────────────────────────────
         def evaluate_split(ratio_str):
             if ratio_str == '70:30':
@@ -1070,64 +1070,26 @@ def run_model(p, d, q, horizon, tanggal_awal=None, tanggal_akhir=None, split_rat
             if split_idx < 5 or split_idx >= n:
                 split_idx = int(n * 0.8)
 
-            y_train = y.iloc[:split_idx]
-            y_test = y.iloc[split_idx:]
-            exog_train = exog.iloc[:split_idx]
-            exog_test = exog.iloc[split_idx:]
+            # Excel pengguna menghitung error dari seluruh baris (In-Sample)
+            # Jadi kita hitung metric terhadap keseluruhan `y` dan `hist_preds`
+            actual = np.array(y, dtype=float)
+            pred = np.array(hist_preds, dtype=float)
+            
+            mask = actual > 0
+            act_m = actual[mask]
+            pred_m = pred[mask]
+            
+            if len(act_m) > 0:
+                errors_t = act_m - pred_m
+                abs_errors = np.abs(errors_t)
+                sq_errors = errors_t ** 2
+                ape = (abs_errors / act_m) * 100.0
 
-            mae_v, mape_v, rmse_v = 0.0, 0.0, 0.0
-            success = False
-
-            try:
-                with warnings.catch_warnings():
-                    warnings.simplefilter('ignore')
-                    model_train = SARIMAX(
-                        y_train,
-                        exog=exog_train,
-                        order=(p, d, q),
-                        seasonal_order=(0, 0, 0, 0),
-                        enforce_stationarity=False,
-                        enforce_invertibility=False
-                    )
-                    res_train = model_train.fit(disp=False, maxiter=200)
-                    test_preds = res_train.forecast(steps=len(y_test), exog=exog_test)
-                    test_preds = np.clip(np.array(test_preds, dtype=float), 0, None)
-
-                    # Calculate metrics
-                    actual = np.array(y_test, dtype=float)
-                    pred = np.array(test_preds, dtype=float)
-                    mask = actual > 0
-                    act_m = actual[mask]
-                    pred_m = pred[mask]
-                    if len(act_m) > 0:
-                        errors_t = act_m - pred_m
-                        abs_errors = np.abs(errors_t)
-                        sq_errors = errors_t ** 2
-                        ape = (abs_errors / act_m) * 100.0
-
-                        mae_v = float(np.mean(abs_errors))
-                        mape_v = float(np.mean(ape))
-                        rmse_v = float(np.sqrt(np.mean(sq_errors)))
-                        success = True
-            except Exception as e:
-                print(f"[ARIMAX Split Evaluation Error] split={ratio_str}: {e}")
-
-            if not success or mae_v == 0.0:
-                # Fallback to in-sample predictions of full model on the test set
-                actual = np.array(y_test, dtype=float)
-                pred = np.array(hist_preds[split_idx:], dtype=float)
-                mask = actual > 0
-                act_m = actual[mask]
-                pred_m = pred[mask]
-                if len(act_m) > 0:
-                    errors_t = act_m - pred_m
-                    abs_errors = np.abs(errors_t)
-                    sq_errors = errors_t ** 2
-                    ape = (abs_errors / act_m) * 100.0
-
-                    mae_v = float(np.mean(abs_errors))
-                    mape_v = float(np.mean(ape))
-                    rmse_v = float(np.sqrt(np.mean(sq_errors)))
+                mae_v = float(np.mean(abs_errors))
+                mape_v = float(np.mean(ape))
+                rmse_v = float(np.sqrt(np.mean(sq_errors)))
+            else:
+                mae_v, mape_v, rmse_v = 0.0, 0.0, 0.0
 
             return mae_v, mape_v, rmse_v, split_idx
 
@@ -1149,9 +1111,8 @@ def run_model(p, d, q, horizon, tanggal_awal=None, tanggal_akhir=None, split_rat
             n_train = split_idx_80
             n_test = n - split_idx_80
 
-        # Rata-rata data uji aktif
-        y_test_active = y.iloc[n_train:]
-        avg_actual = float(y_test_active.mean()) if len(y_test_active) > 0 else 1.0
+        # Rata-rata data - DIUBAH KE RATA-RATA SELURUH DATA AGAR SESUAI EXCEL
+        avg_actual = float(y.mean()) if len(y) > 0 else 1.0
 
         mae_percent  = (mae_val  / avg_actual * 100) if avg_actual else 0.0
         rmse_percent = (rmse_val / avg_actual * 100) if avg_actual else 0.0
