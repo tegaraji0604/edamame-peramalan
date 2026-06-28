@@ -914,11 +914,9 @@ def import_save(pid):
     forecast_results, forecast_errors = generate_standard_forecasts()
 
     if 1 in forecast_results:
-        session['hasil'] = forecast_results[1]
-        session['error'] = None
+        save_hasil_tmp(forecast_results[1])
     elif forecast_errors:
-        session['hasil'] = None
-        session['error'] = next(iter(forecast_errors.values()))
+        session.pop('hasil', None)
 
     if forecast_errors:
         flash(
