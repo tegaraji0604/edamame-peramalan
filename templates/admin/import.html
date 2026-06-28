@@ -1,0 +1,209 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}Import Data â€“ Edamame{% endblock %}
+{% block page_title %}Import Data{% endblock %}
+
+{% block content %}
+
+<!-- HEADER -->
+
+<div class="card" style="margin-bottom:20px;padding:18px 24px;">
+  <div style="font-size:1.05rem;font-weight:700;color:#1a2535;">
+    Import Data Penjualan Terpadu
+  </div>
+  <div style="font-size:.82rem;color:#6c7a8d;margin-top:3px;">
+    Unggah file Excel berisi rekap penjualan harian beserta catatan stok masuk.
+  </div>
+</div>
+
+{% if not preview %}
+
+<!-- ================== UPLOAD ================== -->
+
+<div class="card">
+  <form method="POST" action="{{ url_for('import_excel') }}" enctype="multipart/form-data" id="upload-form">
+
+<div id="drop-zone" style="
+  border:2px dashed #c5cdd8;
+  border-radius:10px;
+  padding:60px 24px;
+  text-align:center;
+  cursor:pointer;
+  background:#fafbfc;">
+
+  <div style="font-size:.95rem;font-weight:700;color:#1a2535;margin-bottom:6px;" id="drop-text">
+    Tarik & Lepas File Excel/CSV di Sini
+  </div>
+
+  <div style="font-size:.8rem;color:#6c7a8d;margin-bottom:18px;">
+    Mendukung format .xlsx atau .csv
+  </div>
+
+  <input type="file" id="file-input" name="file_excel" accept=".xlsx,.xls,.csv" style="display:none;"/>
+
+  <button type="button" id="btn-pick"
+    style="background:#1a2535;color:#fff;padding:10px 26px;border-radius:8px;">
+    Pilih File dari Komputer
+  </button>
+
+</div>
+
+  </form>
+</div>
+
+{% else %}
+
+<!-- ================== PREVIEW ================== -->
+
+<div style="display:flex;justify-content:space-between;margin-bottom:14px;">
+  <div>
+    <strong>Review Data Sebelum Disimpan</strong><br>
+    <small>File: {{ filename }}</small>
+  </div>
+  <div>
+    <a href="{{ url_for('import_excel') }}" class="btn btn-outline btn-sm">â† Upload Ulang</a>
+    <form method="POST" action="{{ url_for('import_save', pid=preview_id) }}" style="display:inline;">
+      <button type="submit" class="btn btn-green btn-sm">Simpan & Buat Prediksi</button>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <table>
+    <thead>
+      <tr>
+        <th>No</th>
+        <th>Bulan & Tahun</th>
+        <th>Penjualan (Y)</th>
+        <th>Jumlah Hari Libur (X1)</th>
+        <th>Frekuensi Pengiriman (X2)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in preview %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td>{{ row.tanggal_disp }}</td>
+        <td style="font-weight:700;">{{ '{:,.0f}'.format(row.penjualan) }} Kg</td>
+        <td>{{ row.x_libur }} Hari</td>
+        <td>{{ row.x_frekuensi_pengiriman }} Kali</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endif %}
+
+<!-- ================== SIDEBAR ================== -->
+
+<div id="history-toggle" style="
+  position: fixed;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #1a2535;
+  color: #fff;
+  padding: 10px;
+  cursor: pointer;
+  z-index: 999;
+">
+  <
+</div>
+
+<div id="history-panel" style="
+  position: fixed;
+  right: -320px;
+  top: 0;
+  width: 320px;
+  height: 100%;
+  background: #fff;
+  box-shadow: -3px 0 10px rgba(0,0,0,.1);
+  transition: .3s;
+  padding: 15px;
+  overflow-y: auto;
+">
+
+
+<b>Riwayat Upload</b>
+
+<!-- ðŸ”¥ TAMBAH DI SINI -->
+<form method="POST" action="{{ url_for('delete_all_data') }}">
+  <button type="submit" style="
+    width:100%;
+    background:#e74c3c;
+    color:#fff;
+    border:none;
+    padding:10px;
+    font-weight:700;
+    border-radius:6px;
+    margin:10px 0;
+    cursor:pointer;
+  "
+  onclick="return confirm('Yakin hapus semua data?')">
+    ðŸ—‘ Hapus Semua Data
+  </button>
+</form>
+
+{% for row in history %}
+
+  <div style="border:1px solid #eee;margin:10px 0;padding:8px;position:relative;border-radius:6px;background:#fcfcfc;">
+    <strong>{{ row.tanggal | date_en }}</strong><br>
+    <span style="font-size: 0.9em; color: #555;">
+      Penjualan: <b>{{ '{:,.0f}'.format(row.penjualan) }} Kg</b><br>
+      Libur: {{ row.x_libur }} Hari | Pengiriman: {{ row.x_frekuensi_pengiriman }} Kali
+    </span>
+<form method="POST" action="{{ url_for('delete_data', id=row.id) }}">
+  <button type="submit" style="
+    position:absolute;
+    top:5px;
+    right:5px;
+    background:#e74c3c;
+    color:#fff;
+    border:none;
+    border-radius:3px;
+    width:20px;
+    height:20px;
+    font-size:11px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  ">x</button>
+</form>
+  </div>
+  {% endfor %}
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+
+<script>
+// TOGGLE SIDEBAR
+const toggle = document.getElementById('history-toggle');
+const panel  = document.getElementById('history-panel');
+
+if(toggle && panel){
+  let open = false;
+  toggle.onclick = () => {
+    panel.style.right = open ? '-320px' : '0';
+    toggle.innerHTML = open ? '<' : '>';
+    open = !open;
+  };
+}
+
+// UPLOAD
+const dz   = document.getElementById('drop-zone');
+const fi   = document.getElementById('file-input');
+const btn  = document.getElementById('btn-pick');
+const form = document.getElementById('upload-form');
+
+if(btn) btn.onclick = () => fi.click();
+if(fi) fi.onchange = () => { if(fi.files.length) form.submit(); };
+
+</script>
+
+{% endblock %}
+
+

@@ -1,0 +1,162 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}Dashboard — Edamame{% endblock %}
+
+{% block page_title %}Menu Utama Admin{% endblock %}
+
+{% block extra_css %}<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>{% endblock %}
+
+
+
+{% block content %}
+
+<!-- Welcome Banner -->
+
+<div style="background:linear-gradient(135deg,#27ae60,#219150);border-radius:10px;padding:22px 28px;
+
+            display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;
+
+            box-shadow:0 4px 16px rgba(39,174,96,.3);">
+
+  <div>
+
+    <div style="font-size:1.1rem;font-weight:700;color:#fff;margin-bottom:4px;">
+
+      Selamat Datang, {{ session.user_nama|upper }}!
+
+    </div>
+
+    <div style="font-size:.83rem;color:rgba(255,255,255,.85);">
+
+      Kelola data histori penjualan dan jalankan model peramalan ARIMAX dengan data terbaru.
+
+    </div>
+
+  </div>
+
+  <div style="font-size:2.6rem;opacity:.35;">🌿</div>
+
+</div>
+
+
+
+<!-- Stat Cards -->
+
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px;">
+
+  <div style="background:#fff;border-radius:10px;padding:20px 22px;box-shadow:0 1px 6px rgba(0,0,0,.07);border-top:3px solid #27ae60;">
+
+    <div style="font-size:.72rem;font-weight:700;color:#6c7a8d;text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px;">
+
+      📊 Total Data Histori
+
+    </div>
+
+    <div style="font-size:2.2rem;font-weight:800;color:#1a2535;">{{ stats.total_histori }}</div>
+
+  </div>
+
+  <div style="background:#fff;border-radius:10px;padding:20px 22px;box-shadow:0 1px 6px rgba(0,0,0,.07);border-top:3px solid #2980b9;">
+
+    <div style="font-size:.72rem;font-weight:700;color:#6c7a8d;text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px;">
+
+      👥 Total User Terdaftar
+
+    </div>
+
+    <div style="font-size:2.2rem;font-weight:800;color:#1a2535;">{{ stats.total_user }}</div>
+
+  </div>
+
+  <div style="background:#fff;border-radius:10px;padding:20px 22px;box-shadow:0 1px 6px rgba(0,0,0,.07);border-top:3px solid #f39c12;">
+
+    <div style="font-size:.72rem;font-weight:700;color:#6c7a8d;text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px;">
+
+      📅 Hari Terdata
+
+    </div>
+
+    <div style="font-size:2.2rem;font-weight:800;color:#1a2535;">{{ stats.hari_terdata }}</div>
+
+  </div>
+
+</div>
+
+
+
+<!-- Chart -->
+
+<div class="card">
+
+  {% set chart = chart_data | from_json if chart_data else [] %}
+
+  {% if chart and chart|length > 0 %}
+
+    <div style="font-size:.95rem;font-weight:700;color:#1a2535;margin-bottom:16px;">📈 Tren Penjualan Bulanan</div>
+
+    <canvas id="trendChart" height="110"></canvas>
+
+  {% else %}
+
+    <div style="text-align:center;padding:52px 0;color:#9aabb8;">
+
+      <div style="font-size:3rem;opacity:.35;margin-bottom:10px;">📊</div>
+
+      <div style="font-weight:600;margin-bottom:4px;color:#6c7a8d;">Belum ada data</div>
+
+      <div style="font-size:.82rem;">Gunakan menu <strong>Peramalan</strong> untuk melihat visualisasi tren data terbaru.</div>
+
+    </div>
+
+  {% endif %}
+
+</div>
+
+{% endblock %}
+
+
+
+{% block extra_js %}
+
+<script>
+
+const raw={{chart_data|safe}};
+
+if(raw&&raw.length>0){
+
+  new Chart(document.getElementById('trendChart').getContext('2d'),{
+
+    type:'line',
+
+    data:{
+
+      labels:raw.map(d=>d.bln),
+
+      datasets:[{
+
+        label:'Jumlah Terjual (kg)',
+
+        data:raw.map(d=>parseFloat(d.total)||0),
+
+        borderColor:'#27ae60',backgroundColor:'rgba(39,174,96,.1)',
+
+        borderWidth:2.5,pointRadius:4,tension:.4,fill:true
+
+      }]
+
+    },
+
+    options:{responsive:true,plugins:{legend:{display:false}},
+
+      scales:{x:{grid:{display:false}},y:{beginAtZero:false}}}
+
+  });
+
+}
+
+</script>
+
+{% endblock %}
+
+
+

@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="Sistem Peramalan Produksi Edamame Berbasis Data – PT AGRAPANA FOOD JAYA"/>
+  <title>Selamat Datang – Sistem Peramalan Produksi Edamame</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌱</text></svg>"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', sans-serif;
+      color: #333;
+      background: #f5f6f8;
+      line-height: 1.6;
+    }
+
+    /* ── HERO ───────────────────────────────────────────────────── */
+    .hero {
+      background: linear-gradient(160deg, #1b2b3a 0%, #1e3248 50%, #1a2c3e 100%);
+      min-height: 210px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 60px 24px 64px;
+    }
+    .hero-inner { max-width: 620px; }
+    .hero h1 {
+      font-family: 'Source Serif 4', 'Georgia', serif;
+      font-size: 2.6rem;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+    .hero p {
+      font-size: 0.97rem;
+      color: rgba(255,255,255,0.75);
+      margin-bottom: 28px;
+      letter-spacing: 0.2px;
+    }
+    .btn-hero {
+      display: inline-block;
+      background: #27ae60;
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 600;
+      padding: 11px 32px;
+      border-radius: 6px;
+      text-decoration: none;
+      letter-spacing: 0.3px;
+      transition: background .2s ease, transform .2s ease;
+      box-shadow: 0 2px 10px rgba(39,174,96,0.35);
+    }
+    .btn-hero:hover { background: #219150; transform: translateY(-1px); }
+
+    /* ── SHARED SECTION ─────────────────────────────────────────── */
+    .section { padding: 64px 24px; }
+    .section-bg-white { background: #ffffff; }
+    .section-bg-grey  { background: #f5f6f8; }
+
+    .section-title {
+      text-align: center;
+      font-family: 'Source Serif 4', 'Georgia', serif;
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #1e2d3e;
+      margin-bottom: 10px;
+    }
+    .section-divider {
+      width: 44px;
+      height: 3px;
+      background: #27ae60;
+      margin: 0 auto 40px;
+      border-radius: 2px;
+    }
+
+    /* ── ABOUT ──────────────────────────────────────────────────── */
+    .about-text {
+      max-width: 760px;
+      margin: 0 auto;
+    }
+    .about-text p {
+      font-size: 0.92rem;
+      color: #444;
+      text-align: justify;
+      margin-bottom: 14px;
+      line-height: 1.85;
+    }
+    .about-text p:last-child { margin-bottom: 0; }
+
+    /* ── CAROUSEL ───────────────────────────────────────────────── */
+    .carousel-outer {
+      background: #f5f6f8;
+      padding: 40px 24px;
+    }
+    .carousel-wrap {
+      position: relative;
+      max-width: 360px;
+      margin: 0 auto;
+      overflow: hidden;
+      border-radius: 8px;
+      box-shadow: 0 4px 18px rgba(0,0,0,.15);
+    }
+    .carousel-track { display: flex; transition: transform .5s ease; }
+    .carousel-slide { min-width: 100%; }
+    .carousel-slide img {
+      width: 100%;
+      height: 220px;
+      object-fit: cover;
+      display: block;
+    }
+    .carousel-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(0,0,0,.45);
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      cursor: pointer;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .2s;
+      z-index: 10;
+    }
+    .carousel-btn:hover { background: #27ae60; }
+    .carousel-btn.prev { left: 10px; }
+    .carousel-btn.next { right: 10px; }
+    .carousel-dots {
+      display: flex;
+      justify-content: center;
+      gap: 7px;
+      margin-top: 14px;
+    }
+    .carousel-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #c0c9d4;
+      cursor: pointer;
+      transition: background .2s, width .2s;
+    }
+    .carousel-dot.active {
+      background: #27ae60;
+      width: 22px;
+      border-radius: 4px;
+    }
+
+    /* ── TUJUAN ─────────────────────────────────────────────────── */
+    .goals-card {
+      max-width: 560px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 6px;
+      padding: 28px 32px;
+      border: 1px solid #e2e8ef;
+      border-left: 4px solid #6ab04c;
+      box-shadow: 0 2px 10px rgba(0,0,0,.06);
+    }
+    .goals-card p {
+      font-size: 0.88rem;
+      color: #444;
+      text-align: justify;
+      line-height: 1.85;
+      margin-bottom: 14px;
+    }
+    .goals-card p:last-child { margin-bottom: 0; }
+
+    /* ── PERUSAHAAN ─────────────────────────────────────────────── */
+    .company-outer { background: #f5f6f8; padding: 64px 24px; }
+    .company-card {
+      max-width: 560px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 6px;
+      border: 1px solid #dde4ed;
+      border-top: 3px solid #6ab04c;
+      box-shadow: 0 2px 10px rgba(0,0,0,.07);
+      overflow: hidden;
+    }
+    .company-top {
+      padding: 22px 28px;
+      text-align: center;
+      border-bottom: 1px solid #edf0f4;
+      font-size: 0.88rem;
+      color: #444;
+      line-height: 1.8;
+    }
+    .company-top strong { color: #1e2d3e; }
+    .company-bottom { padding: 20px 28px; }
+    .company-bottom h4 {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #1e2d3e;
+      margin-bottom: 12px;
+    }
+    .loc-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+    .loc-addr h5 {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #1e2d3e;
+      margin-bottom: 6px;
+    }
+    .loc-addr p {
+      font-size: 0.8rem;
+      color: #555;
+      line-height: 1.7;
+    }
+    .map-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.78rem;
+      color: #2980b9;
+      font-weight: 600;
+      margin-bottom: 8px;
+      text-decoration: none;
+    }
+    .map-link:hover { text-decoration: underline; }
+    .map-wrap {
+      border-radius: 6px;
+      overflow: hidden;
+      height: 160px;
+    }
+    .map-wrap iframe { width: 100%; height: 100%; border: none; }
+
+    /* ── FLASH MESSAGES ─────────────────────────────────────────── */
+    .flash-container {
+      position: fixed; top: 16px; right: 16px; z-index: 9999;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .flash-msg {
+      padding: 11px 18px; border-radius: 6px; font-size: .88rem;
+      box-shadow: 0 3px 12px rgba(0,0,0,.12);
+      animation: slideIn .3s ease; min-width: 240px;
+    }
+    .flash-msg.success { background: #d4edda; color: #155724; border-left: 3px solid #27ae60; }
+    .flash-msg.error   { background: #ffe0de; color: #7b1c1c; border-left: 3px solid #e74c3c; }
+    .flash-msg.info    { background: #d1ecf1; color: #0c5460; border-left: 3px solid #2980b9; }
+    @keyframes slideIn {
+      from { transform: translateX(110%); opacity: 0; }
+      to   { transform: translateX(0);    opacity: 1; }
+    }
+
+    /* ── FORECAST WELCOME CARD ────────────────────────────────────── */
+    .forecast-welcome-card {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 12px;
+      border: 1px solid #e2e8ef;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+      overflow: hidden;
+    }
+    .forecast-welcome-header {
+      background: linear-gradient(135deg, #1b2b3a 0%, #1e3248 100%);
+      padding: 24px 32px;
+      color: #ffffff;
+    }
+    .forecast-welcome-header h3 {
+      font-family: 'Source Serif 4', 'Georgia', serif;
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    .forecast-meta-chips {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .meta-chip {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.9);
+    }
+    .meta-chip strong {
+      color: #27ae60;
+    }
+    .forecast-chart-container {
+      padding: 32px;
+      background: #fbfcfe;
+    }
+    .chart-shell-welcome {
+      position: relative;
+      height: 380px;
+      width: 100%;
+    }
+    .forecast-welcome-footer {
+      padding: 20px 32px;
+      background: #f5f6f8;
+      border-top: 1px solid #e2e8ef;
+      font-size: 0.85rem;
+      color: #555;
+      line-height: 1.6;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-container" id="flash-container">
+        {% for cat, msg in messages %}
+          <div class="flash-msg {{ cat }}">{{ msg }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <!-- ── HERO ─────────────────────────────────────────────────────── -->
+  <section class="hero">
+    <div class="hero-inner">
+      <h1>Selamat Datang</h1>
+      <p>Sistem Peramalan Produksi Edamame Berbasis Data</p>
+      <a href="{{ url_for('login') }}" class="btn-hero" id="btn-masuk-dashboard">Masuk Dashboard</a>
+    </div>
+  </section>
+
+  <!-- ── APA ITU EDAMAME ───────────────────────────────────────────── -->
+  <section class="section section-bg-white">
+    <h2 class="section-title">Apa itu Edamame?</h2>
+    <div class="section-divider"></div>
+    <div class="about-text">
+      <p>Edamame secara alami bebas gluten dan rendah kalori, tidak mengandung kolesterol dan merupakan sumber yang sangat baik dari protein, zat besi, dan kalsium. Edamame merupakan sumber yang sangat penting dari protein bagi mereka yang mengikuti diet nabati.</p>
+      <p>Banyak penelitian telah menunjukkan bahwa peningkatan konsumsi makanan nabati seperti edamame menurunkan risiko obesitas dan kematian secara keseluruhan, diabetes, penyakit jantung dan mempromosikan kulit sehat dan rambut, serta meningkatkan energi.</p>
+      <p>Isoflavon (sejenis senyawa yang disebut phytoestrogen) dalam makanan edamame telah dikaitkan dengan penurunan risiko osteoporosis, sedangkan kalsium dan magnesium dalam edamame dapat mengatur gula darah dan mencegah sakit kepala migrain. Konsumsi makanan berbasis kedelai telah dikaitkan dengan risiko yang lebih rendah dari beberapa kondisi berkaitan dengan usia dan gaya hidup, serta meningkatkan kesehatan secara keseluruhan.</p>
+    </div>
+  </section>
+
+  <!-- ── CAROUSEL ──────────────────────────────────────────────────── -->
+  <div class="carousel-outer">
+    <div class="carousel-wrap">
+      <div class="carousel-track" id="carousel-track">
+        <div class="carousel-slide">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/Edamame.jpg/500px-Edamame.jpg" alt="Edamame 1"/>
+        </div>
+        <div class="carousel-slide">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/Edamame_in_a_tray.jpg/960px-Edamame_in_a_tray.jpg" alt="Edamame 2"/>
+        </div>
+        <div class="carousel-slide">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/39/Edamame_%289636180297%29.jpg/960px-Edamame_%289636180297%29.jpg" alt="Edamame 3"/>
+        </div>
+      </div>
+      <button class="carousel-btn prev" id="carousel-prev" aria-label="Sebelumnya">&#8249;</button>
+      <button class="carousel-btn next" id="carousel-next" aria-label="Berikutnya">&#8250;</button>
+    </div>
+    <div class="carousel-dots" id="carousel-dots">
+      <div class="carousel-dot active" data-idx="0"></div>
+      <div class="carousel-dot" data-idx="1"></div>
+      <div class="carousel-dot" data-idx="2"></div>
+    </div>
+  </div>
+
+  <!-- ── TUJUAN WEBSITE ────────────────────────────────────────────── -->
+  <section class="section section-bg-grey">
+    <h2 class="section-title">Tujuan Website</h2>
+    <div class="section-divider"></div>
+    <div class="goals-card">
+      <p>Tujuan utama dari pengembangan sistem ini adalah membangun sebuah platform peramalan penjualan berbasis web yang interaktif dan mudah digunakan oleh manajemen PT AGRAPANA FOOD JAYA. Sistem ini dirancang untuk secara otomatis mengolah data historis penjualan edamame menggunakan algoritma Seasonal ARIMA dengan Variabel Eksogen (ARIMAX). Melalui dasbor yang komprehensif, pemilik perusahaan dapat dengan cepat melihat proyeksi penjualan bulan berikutnya secara visual dan real-time, tanpa perlu melakukan perhitungan statistik manual yang rumit.</p>
+      <p>Selain memberikan prediksi angka penjualan yang akurat, sistem ini juga dirancang untuk membantu perusahaan memahami dampak faktor eksternal terhadap operasional bisnis. Dengan mengintegrasikan variabel seperti hari libur nasional dan frekuensi pengiriman ke dalam model peramalannya, sistem ini memungkinkan pihak manajemen untuk membuat keputusan strategis yang lebih terukur. Hal ini diharapkan dapat meminimalisir risiko penumpukan maupun kekurangan stok edamame, sehingga pada akhirnya dapat meningkatkan efisiensi rantai pasok dan profitabilitas perusahaan.</p>
+    </div>
+  </section>
+
+  <!-- ── GRAFIK PREDIKSI TERKINI ───────────────────────────────────── -->
+  <section class="section section-bg-white">
+    <h2 class="section-title">Grafik Prediksi Terkini</h2>
+    <div class="section-divider"></div>
+    
+    <div class="forecast-welcome-card">
+      <div class="forecast-welcome-header">
+        <h3>Proyeksi Penjualan Edamame - PT AGRAPANA FOOD JAYA</h3>
+        <div class="forecast-meta-chips">
+          <span class="meta-chip">Model: <strong>{{ hasil.model_name|default('ARIMAX(1,0,1)') }}</strong></span>
+          <span class="meta-chip">Periode Proyeksi: <strong>{{ hasil.horizon|default(12) }} Bulan</strong></span>
+          <span class="meta-chip">Akurasi MAPE: <strong>{{ hasil.mape|default(0) }}%</strong></span>
+        </div>
+      </div>
+      
+      <div class="forecast-chart-container">
+        <div class="chart-shell-welcome">
+          <canvas id="welcome-combined-chart"></canvas>
+        </div>
+      </div>
+      
+      <div class="forecast-welcome-footer">
+        <p>Grafik di atas memvisualisasikan data penjualan aktual historis, hasil uji keselarasan model (in-sample prediction), serta proyeksi penjualan edamame untuk beberapa bulan ke depan berdasarkan parameter optimal model ARIMAX.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── PT AGRAPANA FOOD JAYA ─────────────────────────────────────── -->
+  <div class="company-outer">
+    <h2 class="section-title">PT AGRAPANA FOOD JAYA</h2>
+    <div class="section-divider"></div>
+    <div class="company-card">
+      <div class="company-top">
+        <strong>PT AGRAPANA FOOD JAYA</strong> merupakan perusahaan yang bergerak di bidang pengolahan
+        dan distribusi produk pangan, khususnya edamame. Perusahaan ini berkomitmen untuk menyediakan
+        produk berkualitas tinggi serta mendukung inovasi dalam pengelolaan produksi berbasis teknologi cerdas.
+      </div>
+      <div class="company-bottom">
+        <h4>Lokasi Kami</h4>
+        <div class="loc-grid">
+          <div class="loc-addr">
+            <h5>Kantor &amp; Gudang:</h5>
+            <p>Perumahan Kalila Residence Blok E8,<br/>
+               Jl. Ikan Tombro Barat, Kel. Tunjungsegar,<br/>
+               Kec. Lowokwaru, Kota Malang,<br/>
+               Provinsi Jawa Timur<br/>
+               ID, 65118</p>
+          </div>
+          <div>
+            <a class="map-link"
+               href="https://maps.google.com/?q=Grolia+Edamame+Malang"
+               target="_blank" rel="noopener">
+              Open in Maps ↗
+            </a>
+            <div class="map-wrap">
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3951.552!2d112.6014!3d-7.9365!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e788220f3be5069%3A0x7e1c7b6d9c46ca8e!2sGrolia%20Edamame%20Malang!5e0!3m2!1sen!2sid!4v1700000000000"
+                allowfullscreen="" loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade"
+                title="Lokasi PT AGRAPANA FOOD JAYA">
+              </iframe>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Flash auto-dismiss
+    setTimeout(() => {
+      const fc = document.getElementById('flash-container');
+      if (fc) { fc.style.opacity='0'; fc.style.transition='opacity .5s'; setTimeout(()=>fc.remove(),500); }
+    }, 4000);
+
+    // Carousel
+    const track  = document.getElementById('carousel-track');
+    const dots   = document.querySelectorAll('.carousel-dot');
+    let current  = 0, total = dots.length, timer;
+
+    function goTo(idx) {
+      current = (idx + total) % total;
+      track.style.transform = `translateX(-${current * 100}%)`;
+      dots.forEach((d, i) => d.classList.toggle('active', i === current));
+    }
+    document.getElementById('carousel-prev').addEventListener('click', () => { goTo(current - 1); reset(); });
+    document.getElementById('carousel-next').addEventListener('click', () => { goTo(current + 1); reset(); });
+    dots.forEach(d => d.addEventListener('click', () => { goTo(+d.dataset.idx); reset(); }));
+    function reset() { clearInterval(timer); timer = setInterval(() => goTo(current + 1), 4000); }
+    timer = setInterval(() => goTo(current + 1), 4000);
+  </script>
+
+  {% if hasil %}
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const actL = {{ hasil.act_labels | safe }};
+      const actV = {{ hasil.act_vals | safe }}.map(Number);
+      const ujiV = {{ hasil.uji_vals | safe }}.map(v => v === null ? null : Number(v));
+      const fcL = {{ hasil.fc_labels | safe }};
+      const fcV = {{ hasil.fc_vals | safe }}.map(Number);
+
+      const combinedLabels = [...actL, ...fcL];
+      const actualSeries = [...actV, ...Array(fcL.length).fill(null)];
+      const ujiSeries = [...ujiV, ...Array(fcL.length).fill(null)];
+      const forecastSeries = [
+        ...Array(Math.max(actL.length - 1, 0)).fill(null),
+        ...(actV.length ? [actV[actV.length - 1]] : []),
+        ...fcV
+      ];
+
+      new Chart(document.getElementById('welcome-combined-chart'), {
+        type: 'line',
+        data: {
+          labels: combinedLabels,
+          datasets: [{
+            label: 'Aktual',
+            data: actualSeries,
+            borderColor: '#1e3248',
+            backgroundColor: 'rgba(30, 50, 72, 0.04)',
+            borderWidth: 3,
+            pointRadius: 4,
+            pointBackgroundColor: '#1e3248',
+            tension: 0.3,
+            fill: false,
+            spanGaps: true
+          }, {
+            label: 'Grafik Uji',
+            data: ujiSeries,
+            borderColor: '#4a6b82',
+            backgroundColor: 'rgba(74, 107, 130, 0.04)',
+            borderWidth: 2,
+            borderDash: [5, 5],
+            pointRadius: 3,
+            pointBackgroundColor: '#4a6b82',
+            tension: 0.3,
+            fill: false,
+            spanGaps: false
+          }, {
+            label: 'Proyeksi',
+            data: forecastSeries,
+            borderColor: '#27ae60',
+            backgroundColor: 'rgba(39, 174, 96, 0.08)',
+            borderWidth: 3,
+            borderDash: [6, 4],
+            pointRadius: 4,
+            pointBackgroundColor: '#27ae60',
+            tension: 0.3,
+            fill: false,
+            spanGaps: false
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top',
+              labels: {
+                font: {
+                  family: "'Inter', sans-serif",
+                  size: 11,
+                  weight: '500'
+                },
+                color: '#333'
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: c => c.parsed.y != null ? ` ${c.dataset.label}: ${c.parsed.y.toLocaleString('id-ID')} kg` : null
+              }
+            }
+          },
+          scales: {
+            x: {
+              ticks: { maxTicksLimit: 12, maxRotation: 45, color: '#666' },
+              grid: { color: 'rgba(0, 0, 0, 0.04)' }
+            },
+            y: {
+              beginAtZero: false,
+              ticks: {
+                color: '#666',
+                callback: function(value) {
+                  return value.toLocaleString('id-ID') + ' kg';
+                }
+              },
+              grid: { color: 'rgba(0, 0, 0, 0.05)' }
+            }
+          }
+        }
+      });
+    });
+  </script>
+  {% endif %}
+</body>
+</html>

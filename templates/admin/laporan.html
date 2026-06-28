@@ -1,0 +1,2010 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}Laporan - Edamame{% endblock %}
+{% block page_title %}Laporan{% endblock %}
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+.report-toolbar {
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:16px;
+  margin-bottom:20px;
+}
+.report-toolbar h1 {
+  font-size:1.25rem;
+  font-weight:800;
+  color:#1a2535;
+  margin:0 0 4px;
+}
+.report-toolbar p {
+  font-size:.8rem;
+  color:#6c7a8d;
+  margin:0;
+}
+.report-time {
+  font-size:.8rem;
+  color:#888;
+  margin-bottom:14px;
+}
+.metric-row {
+  display:flex;
+  background:#fff;
+  border-radius:10px;
+  box-shadow:0 1px 8px rgba(0,0,0,.07);
+  overflow:hidden;
+  margin-bottom:20px;
+}
+.metric-cell {
+  flex:1;
+  text-align:center;
+  padding:24px 16px;
+  border-right:1px solid #eaecf0;
+}
+.metric-cell:last-child { border-right:none; }
+.metric-val {
+  font-size:2.2rem;
+  font-weight:800;
+  line-height:1;
+}
+.metric-lbl {
+  font-size:.7rem;
+  text-transform:uppercase;
+  letter-spacing:.6px;
+  color:#9aabb8;
+  margin-top:8px;
+}
+.metric-bar {
+  height:3.5px;
+  border-radius:2px;
+  margin-top:16px;
+}
+.metric-note {
+  color:#526273;
+  font-size:.78rem;
+  line-height:1.5;
+  margin:12px 0 0;
+  text-align:center;
+}
+.report-section {
+  background:#fff;
+  border-radius:10px;
+  box-shadow:0 1px 8px rgba(0,0,0,.07);
+  padding:22px 24px;
+  margin-bottom:20px;
+}
+.report-section h2 {
+  font-size:.98rem;
+  font-weight:800;
+  color:#1a2535;
+  margin:0 0 5px;
+}
+.report-section .section-caption {
+  font-size:.8rem;
+  color:#6c7a8d;
+  margin:0 0 16px;
+}
+.chart-box {
+  position:relative;
+  height:340px;
+  min-height:340px;
+}
+.chart-box canvas {
+  display:block;
+  width:100% !important;
+  height:100% !important;
+}
+.chart-box.compact {
+  height:300px;
+  min-height:300px;
+}
+.chart-detail-grid {
+  display:grid;
+  grid-template-columns:1fr;
+  gap:18px;
+  margin-top:18px;
+}
+.chart-panel,
+.diagnostic-card {
+  border:1px solid #edf1f5;
+  border-radius:8px;
+  background:#fbfcfe;
+  padding:14px;
+  min-width:0;
+}
+.chart-panel h3,
+.diagnostic-card h3 {
+  margin:0 0 4px;
+  color:#1a2535;
+  font-size:.9rem;
+  font-weight:800;
+}
+.chart-panel p,
+.diagnostic-card p {
+  margin:0 0 10px;
+  color:#6c7a8d;
+  font-size:.76rem;
+  line-height:1.45;
+}
+.diagnostic-grid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+}
+.diagnostic-chart {
+  height:230px;
+  min-height:230px;
+}
+.adf-stat-grid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:9px;
+  margin-top:8px;
+}
+.adf-stat {
+  border:1px solid #edf1f5;
+  border-radius:7px;
+  background:#fff;
+  padding:9px 10px;
+}
+.adf-stat span {
+  display:block;
+  color:#7b8794;
+  font-size:.7rem;
+  font-weight:700;
+  margin-bottom:3px;
+}
+.adf-stat strong {
+  display:block;
+  color:#1a2535;
+  font-size:.9rem;
+}
+.adf-summary {
+  margin-top:10px;
+  border-left:3px solid #27ae60;
+  background:#eefaf3;
+  border-radius:7px;
+  color:#216f43;
+  padding:10px 12px;
+  font-size:.78rem;
+  line-height:1.5;
+}
+.preprocess-list {
+  margin:8px 0 0;
+  padding-left:18px;
+  color:#526273;
+  font-size:.78rem;
+  line-height:1.6;
+}
+.preprocess-list li {
+  margin-bottom:5px;
+}
+.manual-meta {
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-bottom:14px;
+}
+.manual-chip {
+  background:#f4f7fa;
+  border-left:3px solid #27ae60;
+  border-radius:7px;
+  padding:8px 11px;
+  font-size:.78rem;
+  color:#526273;
+}
+.manual-chip strong { color:#1a2535; }
+.manual-scroll {
+  max-height:380px;
+  overflow:auto;
+  border:1px solid #edf1f5;
+  border-radius:8px;
+}
+.manual-table {
+  min-width:1080px;
+  font-size:.78rem;
+}
+.manual-table thead th {
+  position:sticky;
+  top:0;
+  z-index:2;
+  background:#1a2535;
+}
+.manual-table td {
+  white-space:nowrap;
+  vertical-align:top;
+}
+.manual-table .formula-cell {
+  white-space:normal;
+  min-width:260px;
+  color:#526273;
+  line-height:1.5;
+}
+.suggestion-grid {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+}
+.suggestion-card {
+  border:1px solid #edf1f5;
+  border-radius:8px;
+  padding:14px 15px;
+  background:#fbfcfe;
+}
+.suggestion-tag {
+  display:inline-flex;
+  border-radius:5px;
+  padding:3px 8px;
+  background:#eaf7f0;
+  color:#1e8449;
+  font-size:.72rem;
+  font-weight:800;
+  margin-bottom:9px;
+}
+.suggestion-card h3 {
+  font-size:.88rem;
+  color:#1a2535;
+  margin:0 0 7px;
+}
+.suggestion-card p {
+  font-size:.8rem;
+  color:#526273;
+  line-height:1.55;
+  margin:0;
+}
+.table-wrap {
+  overflow-x:auto;
+  border-radius:8px;
+}
+.print-table {
+  width:100%;
+  border-collapse:collapse;
+  font-size:.82rem;
+}
+.print-table thead tr {
+  background:#1a2535;
+  color:#fff;
+}
+.print-table th {
+  padding:10px 12px;
+  text-align:left;
+  font-weight:700;
+  white-space:nowrap;
+}
+.print-table tbody tr {
+  border-bottom:1px solid #e8ecf0;
+}
+.print-table td {
+  padding:9px 12px;
+  vertical-align:middle;
+}
+.badge-kerja {
+  display:inline-block;
+  border:1.5px solid #1a2535;
+  color:#1a2535;
+  background:#fff;
+  padding:2px 10px;
+  border-radius:4px;
+  font-size:.72rem;
+  font-weight:600;
+}
+.badge-libur {
+  display:inline-block;
+  border:1.5px solid #f39c12;
+  color:#e67e22;
+  background:#fff8ee;
+  padding:2px 10px;
+  border-radius:4px;
+  font-size:.72rem;
+  font-weight:600;
+}
+.badge-jeda {
+  display:inline-block;
+  border:1.5px solid #e74c3c;
+  color:#c0392b;
+  background:#fff0ee;
+  padding:2px 10px;
+  border-radius:4px;
+  font-size:.72rem;
+  font-weight:600;
+}
+.empty-state {
+  text-align:center;
+  padding:40px 0;
+  color:#9aabb8;
+  font-size:.85rem;
+}
+.print-only { display:none !important; }
+
+@media (max-width: 900px) {
+  .metric-row,
+  .report-toolbar {
+    flex-direction:column;
+  }
+  .metric-cell {
+    width:100%;
+    border-right:none;
+    border-bottom:1px solid #eaecf0;
+  }
+  .metric-cell:last-child { border-bottom:none; }
+  .suggestion-grid {
+    grid-template-columns:1fr;
+  }
+  .chart-detail-grid,
+  .diagnostic-grid,
+  .adf-stat-grid {
+    grid-template-columns:1fr;
+  }
+}
+
+@media print {
+  .sidebar,
+  .main-wrap .topbar,
+  .no-print {
+    display:none !important;
+  }
+  .main-wrap {
+    margin-left:0 !important;
+    padding:0 !important;
+  }
+  .content {
+    padding:0 !important;
+    background:#fff !important;
+  }
+  body {
+    background:#fff !important;
+    font-size:10.5pt;
+    color:#000;
+    font-family:'Calibri','Inter',sans-serif;
+  }
+  @page {
+    size:A4 portrait;
+    margin:15mm 12mm;
+  }
+  .print-only {
+    display:block !important;
+  }
+  .print-page-header {
+    display:flex !important;
+    justify-content:space-between;
+    align-items:center;
+    font-size:8pt;
+    color:#555;
+    border-bottom:1px solid #bbb;
+    padding-bottom:6px;
+    margin-bottom:16px;
+  }
+  .print-page-header .ph-title {
+    color:#1a2535;
+    font-weight:700;
+    font-size:8.5pt;
+  }
+  .report-main-title {
+    font-size:16pt;
+    font-weight:700;
+    color:#000;
+    margin:0 0 3px;
+  }
+  .report-subtitle {
+    font-size:9pt;
+    color:#555;
+    margin:0 0 14px;
+  }
+  .report-time {
+    font-size:8pt;
+    margin-bottom:12px;
+  }
+  .report-section {
+    border:1px solid #ccc !important;
+    border-radius:4px !important;
+    box-shadow:none !important;
+    padding:12px 14px !important;
+    margin-bottom:14px !important;
+    break-inside:avoid;
+    page-break-inside:avoid;
+  }
+  .report-section.print-break {
+    break-before:page;
+    page-break-before:always;
+  }
+  .report-section.table-section,
+  .report-section.manual-section {
+    break-inside:auto;
+    page-break-inside:auto;
+  }
+  .report-section h2 {
+    font-size:10.5pt !important;
+    margin-bottom:4px !important;
+  }
+  .report-section .section-caption {
+    font-size:8pt !important;
+    margin-bottom:9px !important;
+  }
+  .metric-row {
+    display:flex !important;
+    flex-direction:row !important;
+    border:1px solid #ccc !important;
+    border-radius:4px !important;
+    box-shadow:none !important;
+    overflow:hidden;
+    margin-bottom:14px;
+  }
+  .metric-cell {
+    flex:1 1 0 !important;
+    width:auto !important;
+    border-right:1px solid #ccc !important;
+    border-bottom:none !important;
+    padding:14px 10px !important;
+  }
+  .metric-cell:last-child {
+    border-right:none !important;
+  }
+  .metric-val {
+    font-size:22pt !important;
+  }
+  .metric-lbl {
+    font-size:7pt !important;
+    color:#777 !important;
+  }
+  .metric-bar {
+    margin-top:11px !important;
+    height:3px !important;
+  }
+  .chart-box,
+  .chart-box.compact {
+    height:225px !important;
+    min-height:225px !important;
+  }
+  .chart-detail-grid,
+  .diagnostic-grid {
+    display:block !important;
+  }
+  .chart-panel,
+  .diagnostic-card {
+    border:1px solid #ddd !important;
+    border-radius:4px !important;
+    padding:9px 10px !important;
+    margin-bottom:10px !important;
+    background:#fff !important;
+    break-inside:avoid;
+  }
+  .chart-panel h3,
+  .diagnostic-card h3 {
+    font-size:9pt !important;
+  }
+  .chart-panel p,
+  .diagnostic-card p,
+  .preprocess-list {
+    font-size:8pt !important;
+  }
+  .diagnostic-chart {
+    height:160px !important;
+    min-height:160px !important;
+  }
+  .chart-box canvas {
+    max-width:100% !important;
+    height:225px !important;
+    max-height:225px !important;
+  }
+  .manual-meta {
+    gap:5px !important;
+    margin-bottom:8px !important;
+  }
+  .manual-chip {
+    font-size:7pt !important;
+    padding:4px 7px !important;
+    border-radius:3px !important;
+  }
+  .manual-scroll {
+    max-height:none !important;
+    overflow:visible !important;
+    border:none !important;
+  }
+  .manual-table {
+    min-width:0 !important;
+    width:100% !important;
+    font-size:6.2pt !important;
+    border-collapse:collapse !important;
+  }
+  .manual-table thead th {
+    position:static !important;
+    padding:5px 4px !important;
+    font-size:6.2pt !important;
+  }
+  .manual-table td {
+    padding:4px !important;
+    white-space:normal !important;
+    border-bottom:1px solid #e0e0e0 !important;
+  }
+  .manual-table .formula-cell {
+    min-width:0 !important;
+  }
+  .suggestion-grid {
+    display:block !important;
+  }
+  .suggestion-card {
+    border:1px solid #ddd !important;
+    border-radius:4px !important;
+    padding:9px 10px !important;
+    margin-bottom:8px !important;
+    background:#fff !important;
+    break-inside:avoid;
+  }
+  .suggestion-tag {
+    font-size:7pt !important;
+    padding:2px 6px !important;
+  }
+  .suggestion-card h3 {
+    font-size:9pt !important;
+    margin-bottom:4px !important;
+  }
+  .suggestion-card p {
+    font-size:8pt !important;
+  }
+  .table-wrap {
+    overflow:visible !important;
+  }
+  .print-table {
+    font-size:8pt !important;
+  }
+  .print-table th {
+    padding:6px 8px !important;
+    font-size:7.5pt !important;
+  }
+  .print-table td {
+    padding:5px 8px !important;
+  }
+  .badge-kerja,
+  .badge-libur,
+  .badge-jeda {
+    background:#fff !important;
+    padding:1px 6px !important;
+    border-radius:3px !important;
+    font-size:7pt !important;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="report-toolbar no-print" style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+  <div>
+    <h1>Laporan Analisis Penjualan</h1>
+    <p>Rekapitulasi data historis, prediksi ARIMAX, evaluasi model, perhitungan manual, dan saran operasional.</p>
+  </div>
+  
+  <div style="display: flex; align-items: center; gap: 12px;">
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span style="font-size: 0.85rem; font-weight: 700; color: #475569;">Periode:</span>
+      <span style="font-size: 0.85rem; font-weight: 800; color: #1e293b; background: #e2e8f0; padding: 6px 12px; border-radius: 6px;">
+        {% if horizon == 1 %}1 Bulan
+        {% elif horizon == 3 %}3 Bulan
+        {% elif horizon == 6 %}6 Bulan
+        {% elif horizon == 12 %}12 Bulan (1 Tahun)
+        {% else %}{{ horizon }} Bulan
+        {% endif %}
+      </span>
+    </div>
+    <button onclick="printReport()"
+      style="display:flex;align-items:center;gap:8px;background:#27ae60;color:#fff;border:none;
+             border-radius:8px;padding:10px 22px;font-size:.88rem;font-weight:700;cursor:pointer;
+             font-family:inherit;box-shadow:0 3px 12px rgba(39,174,96,.25);white-space:nowrap;">
+      Cetak Laporan (PDF)
+    </button>
+  </div>
+</div>
+
+<div class="print-page-header print-only">
+  <span class="print-ts">--</span>
+  <span class="ph-title">Laporan Akhir - Edamame Pro</span>
+</div>
+
+<div class="print-only" style="margin-bottom:16px;">
+  <div class="report-main-title">Laporan Analisis Penjualan</div>
+  <div class="report-subtitle">Rekapitulasi data historis, prediksi ARIMAX, evaluasi model, perhitungan manual, dan saran operasional.</div>
+</div>
+
+<div class="report-time">
+  Model terakhir dijalankan: {{ last_run }}
+</div>
+
+<section class="report-section">
+  <h2>1. Evaluasi Model</h2>
+  <p class="section-caption">Nilai akurasi model terakhir berdasarkan data uji historis.</p>
+  
+  <div class="metric-row" style="display:flex;background:#fff;border-radius:10px;box-shadow:0 1px 8px rgba(0,0,0,.07);overflow:hidden;margin-bottom:20px;">
+    <!-- MAE Box -->
+    <div class="metric-cell" style="flex:1;text-align:center;padding:20px 16px;border-right:1px solid #eaecf0;">
+      <div class="metric-val" style="color:#2980b9;font-size:2.2rem;font-weight:800;line-height:1;">{% if hasil %}{{ hasil.mae_percent }}%{% else %}--%{% endif %}</div>
+      <div class="metric-lbl" style="font-size:.78rem;font-weight:700;color:#526273;margin-top:6px;text-transform:none;">MAE</div>
+      <div style="font-size:0.75rem;color:#7f8c8d;margin-top:2px;">({% if hasil %}{{ hasil.mae }}{% else %}--{% endif %} unit)</div>
+      <div style="margin-top: 10px;">
+        {% if hasil %}
+          {% if hasil.mae_percent < 10 %}
+            <span style="background:#eafaf1;color:#27ae60;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:700;display:inline-block;">✓ Baik</span>
+          {% elif hasil.mae_percent <= 20 %}
+            <span style="background:#fffbee;color:#e67e22;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:700;display:inline-block;">⚠ Cukup</span>
+          {% else %}
+            <span style="background:#fff5f5;color:#c0392b;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:700;display:inline-block;">✗ Tinggi</span>
+          {% endif %}
+        {% else %}
+          <span style="color:#999;font-size:0.72rem;">--</span>
+        {% endif %}
+      </div>
+    </div>
+    
+    <!-- MAPE Box -->
+    <div class="metric-cell" style="flex:1;text-align:center;padding:20px 16px;border-right:1px solid #eaecf0;">
+      <div class="metric-val" style="color:#27ae60;font-size:2.2rem;font-weight:800;line-height:1;">{% if hasil %}{{ hasil.mape }}%{% else %}--%{% endif %}</div>
+      <div class="metric-lbl" style="font-size:.78rem;font-weight:700;color:#526273;margin-top:6px;text-transform:none;">MAPE</div>
+      <div style="font-size:0.75rem;color:#7f8c8d;margin-top:2px;">(target &lt; 20%)</div>
+      <div style="margin-top: 10px;">
+        {% if hasil %}
+          {% if hasil.mape < 10 %}
+            <span style="background:#eafaf1;color:#27ae60;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:700;display:inline-block;">✓ Sangat Baik</span>
+          {% elif hasil.mape <= 20 %}
+            <span style="background:#eefaf3;color:#16a085;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:700;display:inline-block;">✓ Baik</span>
+          {% elif hasil.mape <= 50 %}
+            <span style="background:#fffbee;color:#e67e22;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:700;display:inline-block;">⚠ Cukup</span>
+          {% else %}
+            <span style="background:#fff5f5;color:#c0392b;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:700;display:inline-block;">✗ Buruk</span>
+          {% endif %}
+        {% else %}
+          <span style="color:#999;font-size:0.72rem;">--</span>
+        {% endif %}
+      </div>
+    </div>
+    
+    <!-- RMSE Box -->
+    <div class="metric-cell" style="flex:1;text-align:center;padding:20px 16px;border-right:none;">
+      <div class="metric-val" style="color:#e74c3c;font-size:2.2rem;font-weight:800;line-height:1;">{% if hasil %}{{ hasil.rmse_percent }}%{% else %}--%{% endif %}</div>
+      <div class="metric-lbl" style="font-size:.78rem;font-weight:700;color:#526273;margin-top:6px;text-transform:none;">RMSE</div>
+      <div style="font-size:0.75rem;color:#7f8c8d;margin-top:2px;">({% if hasil %}{{ hasil.rmse }}{% else %}--{% endif %} unit)</div>
+      <div style="margin-top: 10px;">
+        {% if hasil %}
+          {% if hasil.rmse_percent < 10 %}
+            <span style="background:#eafaf1;color:#27ae60;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:700;display:inline-block;">✓ Sangat Baik</span>
+          {% elif hasil.rmse_percent <= 20 %}
+            <span style="background:#eefaf3;color:#16a085;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:700;display:inline-block;">✓ Baik</span>
+          {% else %}
+            <span style="background:#fff5f5;color:#c0392b;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:700;display:inline-block;">✗ Perlu Optimasi</span>
+          {% endif %}
+        {% else %}
+          <span style="color:#999;font-size:0.72rem;">--</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  
+  <p class="metric-note" style="background:#f4f6f9;padding:12px 16px;border-radius:8px;border-left:4px solid #2980b9;font-size:0.76rem;color:#526273;text-align:left;margin-top:12px;line-height:1.5;">
+    ℹ️ <strong>Keterangan:</strong> MAE dan RMSE ditampilkan sebagai persentase terhadap rata-rata data uji agar lebih mudah diinterpretasikan. Nilai asli tetap tersedia dalam satuan penjualan (unit). Rata-rata data uji: <strong>{% if hasil %}{{ hasil.avg_actual }}{% else %}--{% endif %} unit</strong>.
+  </p>
+</section>
+
+<section class="report-section">
+  <h2>2. Diagnostik Data</h2>
+  <p class="section-caption">ACF, PACF, ADF, dan preprocessing dari data histori.</p>
+  {% set diagnostics = hasil.diagnostics|default({}) %}
+  {% set adf = diagnostics.get('adf', {}) if diagnostics else {} %}
+  {% set preprocessing = diagnostics.get('preprocessing', {}) if diagnostics else {} %}
+  <div class="diagnostic-grid">
+    <article class="diagnostic-card">
+      <h3>Grafik ACF</h3>
+      <p>Korelasi data dengan lag sebelumnya.</p>
+      <div class="diagnostic-chart"><canvas id="acf-chart"></canvas></div>
+    </article>
+    <article class="diagnostic-card">
+      <h3>Grafik PACF</h3>
+      <p>Korelasi parsial setelah pengaruh lag lain dikontrol.</p>
+      <div class="diagnostic-chart"><canvas id="pacf-chart"></canvas></div>
+    </article>
+    <article class="diagnostic-card">
+      <h3>Hasil ADF</h3>
+      <p>Uji akar unit untuk melihat stasioneritas data.</p>
+      <div class="adf-stat-grid">
+        <div class="adf-stat"><span>ADF Statistic</span><strong>{{ adf.get('statistic') if adf.get('statistic') is not none else '-' }}</strong></div>
+        <div class="adf-stat"><span>p-value</span><strong>{{ adf.get('p_value') if adf.get('p_value') is not none else '-' }}</strong></div>
+        <div class="adf-stat"><span>Lag</span><strong>{{ adf.get('lags') if adf.get('lags') is not none else '-' }}</strong></div>
+        <div class="adf-stat"><span>N Observasi</span><strong>{{ adf.get('nobs') if adf.get('nobs') is not none else '-' }}</strong></div>
+      </div>
+      <div class="adf-summary">{{ adf.summary|default('Belum ada hasil ADF.') }}</div>
+    </article>
+    <article class="diagnostic-card">
+      <h3>Preprocessing</h3>
+      <p>Ringkasan data yang dipakai sebelum model berjalan.</p>
+      <div class="adf-stat-grid">
+        <div class="adf-stat"><span>Data awal</span><strong>{{ preprocessing.original_rows|default(0) }}</strong></div>
+        <div class="adf-stat"><span>Data harian</span><strong>{{ preprocessing.daily_rows|default(0) }}</strong></div>
+        <div class="adf-stat"><span>Tanggal kosong</span><strong>{{ preprocessing.missing_days_filled|default(0) }}</strong></div>
+        <div class="adf-stat"><span>Duplikat</span><strong>{{ preprocessing.duplicate_rows|default(0) }}</strong></div>
+      </div>
+      <ul class="preprocess-list">
+        {% for step in preprocessing.steps|default([]) %}
+        <li>{{ step }}</li>
+        {% else %}
+        <li>Belum ada ringkasan preprocessing.</li>
+        {% endfor %}
+      </ul>
+    </article>
+  </div>
+</section>
+
+<section class="report-section">
+  <h2>3. Grafik Visualisasi Data Aktual, Data Uji dan Proyeksi Kedepannya</h2>
+  <p class="section-caption">Perbandingan data aktual, data uji, dan proyeksi dalam satu grafik.</p>
+  {% if hasil %}
+    <div class="chart-box" style="height:360px;min-height:360px;margin-bottom:20px;">
+      <canvas id="combined-chart" height="110"></canvas>
+    </div>
+    
+    <div class="chart-detail-grid" style="display:grid;grid-template-columns:1fr;gap:18px;">
+      <article class="chart-panel">
+        <h3>Grafik Data Aktual</h3>
+        <p>Data aktual penjualan yang menjadi dasar peramalan (maksimum bulanan).</p>
+        <div class="chart-box" style="height:300px;min-height:300px;">
+          <canvas id="actual-chart" height="110"></canvas>
+        </div>
+      </article>
+      <article class="chart-panel">
+        <h3>Grafik Data Uji</h3>
+        <p>Data uji hasil validasi model pada periode histori.</p>
+        <div class="chart-box" style="height:300px;min-height:300px;">
+          <canvas id="uji-chart" height="110"></canvas>
+        </div>
+      </article>
+      <article class="chart-panel">
+        <h3>Grafik Proyeksi</h3>
+        <p>Hasil proyeksi ARIMAX untuk periode yang dipilih (distribusi mingguan).</p>
+        <div class="chart-box" style="height:330px;min-height:330px;">
+          <canvas id="forecast-chart" height="110"></canvas>
+        </div>
+      </article>
+    </div>
+  {% else %}
+    <div class="empty-state">Belum ada data. Jalankan peramalan terlebih dahulu.</div>
+  {% endif %}
+</section>
+
+<section class="report-section manual-section print-break">
+  <h2>4. Tabel Perhitungan &amp; Evaluasi Model</h2>
+  <p class="section-caption">Evaluasi model ARIMAX periode data uji — rumus sesuai standar akademik skripsi.</p>
+
+  <!-- Stats Cards -->
+  <div id="eval-stats-row" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:12px;margin-bottom:18px;"></div>
+
+  <div class="manual-meta">
+    <div class="manual-chip"><strong>Model:</strong> ARIMAX({% if hasil %}{{ hasil.p_order }}{% else %}1{% endif %}, {% if hasil %}{{ hasil.d_order }}{% else %}0{% endif %}, {% if hasil %}{{ hasil.q_order }}{% else %}1{% endif %})</div>
+    <div class="manual-chip"><strong>Algoritma:</strong> {% if hasil %}{{ hasil.model_name }}{% else %}hybrid{% endif %}</div>
+    <div class="manual-chip"><strong>Periode uji:</strong> <span id="tbl-period-info">--</span></div>
+  </div>
+
+
+
+  <div style="display:flex;justify-content:flex-end;margin-bottom:10px;" class="no-print">
+    <button onclick="downloadCalcCsv()" id="btn-csv-calc"
+      style="display:flex;align-items:center;gap:7px;background:#2980b9;color:#fff;border:none;
+             border-radius:7px;padding:8px 18px;font-size:.82rem;font-weight:700;cursor:pointer;
+             font-family:inherit;box-shadow:0 2px 8px rgba(41,128,185,.22);">
+      &#11015; Unduh CSV
+    </button>
+  </div>
+  <div class="manual-scroll">
+    <table class="manual-table" id="calc-table" style="min-width:600px;">
+      <thead>
+        <tr>
+          <th style="width:40px;">No</th>
+          <th>Periode</th>
+          <th>Data Aktual</th>
+          <th>Prediksi ARIMAX</th>
+          <th>Error = A─P</th>
+          <th>APE (%)</th>
+        </tr>
+      </thead>
+      <tbody id="calc-table-body">
+        <tr><td colspan="6" class="empty-state">Memuat data...</td></tr>
+      </tbody>
+      <tfoot id="calc-table-foot"></tfoot>
+    </table>
+  </div>
+</section>
+
+<section class="report-section print-break no-print">
+  <h2>5. Auto-Tune Parameter ARIMAX</h2>
+  <p class="section-caption">Grid search otomatis untuk menemukan kombinasi (p,d,q) dengan MAPE &lt; 20% dan RMSE terbaik.</p>
+  <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px;">
+    <label style="font-size:.85rem;">Maks p: <input type="number" id="tune-max-p" value="5" min="0" max="10" style="width:55px;padding:4px 6px;border:1px solid #ccc;border-radius:5px;"></label>
+    <label style="font-size:.85rem;">Maks d: <input type="number" id="tune-max-d" value="1" min="0" max="3" style="width:55px;padding:4px 6px;border:1px solid #ccc;border-radius:5px;"></label>
+    <label style="font-size:.85rem;">Maks q: <input type="number" id="tune-max-q" value="5" min="0" max="10" style="width:55px;padding:4px 6px;border:1px solid #ccc;border-radius:5px;"></label>
+    <label style="font-size:.85rem;">Kriteria:
+      <select id="tune-criterion" style="padding:4px 8px;border:1px solid #ccc;border-radius:5px;">
+        <option value="mape">MAPE (Default)</option>
+        <option value="aic">AIC</option>
+        <option value="bic">BIC</option>
+      </select>
+    </label>
+    <button id="btn-auto-tune" onclick="runAutoTune()"
+      style="background:#27ae60;color:#fff;border:none;border-radius:7px;padding:9px 22px;font-weight:700;cursor:pointer;font-family:inherit;">
+      &#9881; Jalankan Auto-Tune
+    </button>
+    <span id="tune-status" style="font-size:.82rem;color:#666;"></span>
+  </div>
+  <div id="tune-result" style="display:none;">
+    <div id="tune-comparison" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;"></div>
+    <h4 style="margin-bottom:8px;">Semua Kombinasi (Top 30, diurutkan dari terbaik):</h4>
+    <div style="overflow-x:auto;"><table id="tune-grid-table" style="width:100%;border-collapse:collapse;font-size:.82rem;">
+      <thead><tr style="background:#f4f6fa;">
+        <th style="padding:6px 10px;border:1px solid #dee2e6;">p</th>
+        <th style="padding:6px 10px;border:1px solid #dee2e6;">d</th>
+        <th style="padding:6px 10px;border:1px solid #dee2e6;">q</th>
+        <th style="padding:6px 10px;border:1px solid #dee2e6;">AIC</th>
+        <th style="padding:6px 10px;border:1px solid #dee2e6;">BIC</th>
+        <th style="padding:6px 10px;border:1px solid #dee2e6;">MAE</th>
+        <th style="padding:6px 10px;border:1px solid #dee2e6;">MAPE (%)</th>
+        <th style="padding:6px 10px;border:1px solid #dee2e6;">RMSE</th>
+        <th style="padding:6px 10px;border:1px solid #dee2e6;">RMSE (%)</th>
+      </tr></thead>
+      <tbody id="tune-grid-body"></tbody>
+    </table></div>
+  </div>
+</section>
+
+<section class="report-section print-break no-print">
+  <h2>6. Riwayat Evaluasi Model</h2>
+  <p class="section-caption">Semua hasil evaluasi yang pernah dijalankan, urutan terbaru.</p>
+  <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;font-size:.82rem;">
+      <thead><tr style="background:#f4f6fa;">
+        <th style="padding:6px 10px;border:1px solid #dee2e6;">#</th>
+        <th style="padding:6px 10px;border:1px solid #dee2e6;">Tanggal Eval</th>
+        <th style="padding:6px 10px;border:1px solid #dee2e6;">p,d,q</th>
+        <th style="padding:6px 10px;border:1px solid #dee2e6;">MAE</th>
+        <th style="padding:6px 10px;border:1px solid #dee2e6;">MAPE (%)</th>
+        <th style="padding:6px 10px;border:1px solid #dee2e6;">RMSE</th>
+        <th style="padding:6px 10px;border:1px solid #dee2e6;">n Train</th>
+        <th style="padding:6px 10px;border:1px solid #dee2e6;">n Test</th>
+        <th style="padding:6px 10px;border:1px solid #dee2e6;">Model</th>
+      </tr></thead>
+      <tbody id="history-table-body"><tr><td colspan="9" style="text-align:center;padding:14px;color:#999;">Memuat riwayat...</td></tr></tbody>
+    </table>
+  </div>
+</section>
+
+<section class="report-section print-break no-print">
+  <h2>7. Optimasi Variabel Eksogen</h2>
+  <p class="section-caption">Kontribusi dan korelasi variabel eksogen terhadap target penjualan (penjualan).</p>
+  <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;font-size:.82rem;">
+      <thead><tr style="background:#f4f6fa;">
+        <th style="padding:6px 10px;border:1px solid #dee2e6;text-align:left;">Variabel Eksogen</th>
+        <th style="padding:6px 10px;border:1px solid #dee2e6;text-align:center;">Korelasi Pearson</th>
+        <th style="padding:6px 10px;border:1px solid #dee2e6;text-align:center;">Kontribusi Reduksi MAE (%)</th>
+        <th style="padding:6px 10px;border:1px solid #dee2e6;text-align:center;">Hari Aktif</th>
+        <th style="padding:6px 10px;border:1px solid #dee2e6;text-align:center;">Rekomendasi</th>
+      </tr></thead>
+      <tbody id="exog-table-body">
+        <tr><td colspan="5" style="text-align:center;padding:14px;color:#999;">Memuat korelasi eksogen...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="report-section print-break">
+  <h2>8. Saran Operasional</h2>
+  <p class="section-caption">Saran operasional untuk pemilik perusahaan berdasarkan tren hasil prediksi.</p>
+  <div class="suggestion-grid" id="suggestion-list"></div>
+</section>
+
+<section class="report-section table-section print-break">
+  <h2>9. Detail Seluruh Data Penjualan</h2>
+  <p class="section-caption">Data penjualan aktual beserta variabel eksogen dan keterangan berdasarkan urutan tanggal.</p>
+  <div class="table-wrap">
+    <table class="print-table">
+      <thead>
+        <tr>
+          <th style="width:45px;">NO</th>
+          <th>BULAN & TAHUN</th>
+          <th>PENJUALAN (Y)</th>
+          <th>HARI LIBUR (X1)</th>
+          <th>FREKUENSI PENGIRIMAN (X2)</th>
+          <th>KETERANGAN</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in hist %}
+        <tr>
+          <td style="color:{% if r.penjualan and r.penjualan>0 %}#2980b9{% else %}#e67e22{% endif %};font-weight:600;">{{ loop.index }}</td>
+          <td>{{ r.tanggal | date_en }}</td>
+          <td style="font-weight:600;">
+            {% if r.penjualan and r.penjualan > 0 %}
+              {{ '{:,.0f}'.format(r.penjualan) }} Kg
+            {% else %}
+              <span style="color:#aaa;">0 Kg</span>
+            {% endif %}
+          </td>
+          <td>{{ r.x_libur }} Hari</td>
+          <td>{{ r.x_frekuensi_pengiriman }} Kali</td>
+          <td style="color:#555;">{{ r.keterangan if r.keterangan else '-' }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="empty-state">Belum ada data.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const now = new Date();
+const ts = now.toLocaleDateString('id-ID', {day:'2-digit', month:'2-digit', year:'numeric'})
+  + ', ' + now.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
+document.querySelectorAll('.print-ts').forEach(el => { el.textContent = ts; });
+
+const actL = {{ hasil.act_labels | safe }};
+const actV = {{ hasil.act_vals | safe }}.map(Number);
+const ujiV = {{ hasil.uji_vals | safe }}.map(v => v === null ? null : Number(v));
+const fcL  = {{ hasil.fc_labels | safe }};
+const fcV  = {{ hasil.fc_vals | safe }}.map(Number);
+const actL_daily_tail = {{ hasil.act_labels_daily_tail | default('[]') | safe }};
+const actV_daily_tail = {{ hasil.act_vals_daily_tail  | default('[]') | safe }}.map(Number);
+const fcL_daily  = {{ hasil.fc_labels_daily | default('[]') | safe }};
+const fcV_daily  = {{ hasil.fc_vals_daily   | default('[]') | safe }}.map(Number);
+const testL      = {{ hasil.test_labels_daily   | default('[]') | safe }};
+const testActuals= {{ hasil.test_actuals_daily  | default('[]') | safe }}.map(Number);
+const testPreds  = {{ hasil.test_preds_daily    | default('[]') | safe }}.map(Number);
+const manualRows = {{ hasil.manual_rows | default('[]') | safe }};
+const modelP     = Number('{{ hasil.p_order|default(1) }}');
+const modelD     = Number('{{ hasil.d_order|default(0) }}');
+const modelQ     = Number('{{ hasil.q_order|default(1) }}');
+const nTrain     = Number('{{ hasil.n_train|default(0) }}');
+const nTest      = Number('{{ hasil.n_test|default(0) }}');
+const totAbsErr  = Number('{{ hasil.total_abs_error|default(0) }}');
+const totSqErr   = Number('{{ hasil.total_sq_error|default(0) }}');
+const totApe     = Number('{{ hasil.total_ape|default(0) }}');
+const diagnostics = {{ hasil.diagnostics|default({})|tojson }};
+const reportCharts = [];
+const currentHorizon = {{ horizon }};
+
+const coefLibur = Number('{{ hasil.coef_libur|default(0.0) }}');
+const coefJeda  = Number('{{ hasil.coef_jeda|default(0.0) }}');
+const coefAr1   = Number('{{ hasil.coef_ar1|default(0.0) }}');
+const coefMa1   = Number('{{ hasil.coef_ma1|default(0.0) }}');
+const y37       = Number('{{ hasil.y_37|default(0.0) }}');
+const y36       = Number('{{ hasil.y_36|default(0.0) }}');
+const xLibur37  = Number('{{ hasil.x_libur_37|default(0.0) }}');
+const xLibur36  = Number('{{ hasil.x_libur_36|default(0.0) }}');
+const xJeda37   = Number('{{ hasil.x_jeda_37|default(0.0) }}');
+const xJeda36   = Number('{{ hasil.x_jeda_36|default(0.0) }}');
+const testExogLibur = {{ hasil.test_exog_libur | default('[]') | safe }};
+const testExogJeda  = {{ hasil.test_exog_jeda  | default('[]') | safe }};
+
+
+function formatNumber(value, digits = 2) {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return '-';
+  return num.toLocaleString('id-ID', {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits
+  });
+}
+
+function avg(values) {
+  const clean = values.map(Number).filter(Number.isFinite);
+  if (!clean.length) return 0;
+  return clean.reduce((sum, val) => sum + val, 0) / clean.length;
+}
+
+function stdDev(values) {
+  const mean = avg(values);
+  const clean = values.map(Number).filter(Number.isFinite);
+  if (!clean.length) return 0;
+  return Math.sqrt(clean.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / clean.length);
+}
+
+function weightedAr(series, pOrder) {
+  if (!series.length || pOrder <= 0) return 0;
+  let totalWeight = 0;
+  let totalValue = 0;
+  for (let i = 1; i <= pOrder; i += 1) {
+    const idx = Math.max(series.length - i, 0);
+    const weight = pOrder - i + 1;
+    totalWeight += weight;
+    totalValue += Number(series[idx] || 0) * weight;
+  }
+  return totalWeight ? totalValue / totalWeight : 0;
+}
+
+function buildRecentResiduals(values, pOrder) {
+  const residuals = [];
+  for (let i = Math.max(1, pOrder); i < values.length; i += 1) {
+    const history = values.slice(0, i);
+    const estimate = weightedAr(history, Math.max(1, pOrder));
+    residuals.push(Number(values[i]) - estimate);
+  }
+  return residuals.slice(-30);
+}
+
+function maComponent(residuals, qOrder) {
+  if (!residuals.length || qOrder <= 0) return 0;
+  return avg(residuals.slice(-qOrder)) * 0.35;
+}
+
+
+
+const BULAN_ID = ['Januari','Februari','Maret','April','Mei','Juni',
+                  'Juli','Agustus','September','Oktober','November','Desember'];
+
+function labelBulan(yearMonth) {
+  // yearMonth = '2022-01'
+  const parts = yearMonth.split('-');
+  return BULAN_ID[parseInt(parts[1], 10) - 1] + ' ' + parts[0];
+}
+
+function aggregateMonthly() {
+  /**
+   * PENTING: APE dihitung per-hari terlebih dahulu, baru di-rata-rata per bulan.
+   * Ini BERBEDA dari menghitung APE dari total bulan.
+   *
+   *   BENAR   : APE_bulan = rata-rata(APE_harian) dalam bulan tsb
+   *   SALAH   : APE_bulan = |total_aktual - total_pred| / total_aktual ─ 100
+   *
+   * Nilai MAE/MAPE/RMSE di DASHBOARD dihitung dari data HARIAN (per-titik).
+   * Tabel ini menampilkan agregasi bulanan (sum aktual, sum prediksi, rata-rata APE).
+   */
+  const monthMap = {};
+  testL.forEach((dateStr, i) => {
+    const ym = dateStr.slice(0, 7); // 'YYYY-MM'
+    if (!monthMap[ym]) monthMap[ym] = {
+      actualSum: 0, predSum: 0, count: 0,
+      apeSum: 0, apeCount: 0
+    };
+    const a = Number(testActuals[i]);
+    const p = Number(testPreds[i]);
+    monthMap[ym].actualSum += a;
+    monthMap[ym].predSum   += p;
+    monthMap[ym].count     += 1;
+    // APE per hari — hanya jika aktual > 0
+    if (a > 0) {
+      const ape_hari = Math.abs(a - p) / a * 100;
+      monthMap[ym].apeSum   += ape_hari;
+      monthMap[ym].apeCount += 1;
+    }
+  });
+  return Object.keys(monthMap).sort().map(ym => ({
+    ym,
+    label   : labelBulan(ym),
+    actual  : monthMap[ym].actualSum,
+    pred    : monthMap[ym].predSum,
+    avgApe  : monthMap[ym].actualSum > 0
+                ? Math.abs(monthMap[ym].actualSum - monthMap[ym].predSum) / monthMap[ym].actualSum * 100
+                : null,
+    count   : monthMap[ym].count,
+  }));
+}
+
+
+function buildStatsCards() {
+  const container = document.getElementById('eval-stats-row');
+  if (!container) return;
+  const avgAct = testActuals.filter(v => v > 0).reduce((a,b)=>a+b,0) /
+                 Math.max(testActuals.filter(v=>v>0).length, 1);
+  const mae  = {{ hasil.mae  | default(0) }};
+  const mape = {{ hasil.mape | default(0) }};
+  const rmse = {{ hasil.rmse | default(0) }};
+  
+  const maeP = avgAct > 0 ? (mae / avgAct) * 100 : 0;
+  const maeBadge = maeP < 10 ? '✓ Baik' : maeP <= 20 ? '⚠ Cukup' : '✗ Tinggi';
+  const maeColor = maeP < 10 ? '#27ae60' : maeP <= 20 ? '#e67e22' : '#c0392b';
+
+  const mapeBadge = mape < 10 ? '✓ Sangat Baik' : mape <= 20 ? '✓ Baik' : mape <= 50 ? '⚠ Cukup' : '✗ Buruk';
+  const mapeColor = mape < 10 ? '#27ae60' : mape <= 20 ? '#16a085' : mape <= 50 ? '#e67e22' : '#c0392b';
+
+  const rmseP = avgAct > 0 ? (rmse / avgAct) * 100 : 0;
+  const rmseBadge = rmseP < 10 ? '✓ Sangat Baik' : rmseP <= 20 ? '✓ Baik' : '✗ Perlu Opt.';
+  const rmseColor = rmseP < 10 ? '#27ae60' : rmseP <= 20 ? '#16a085' : '#c0392b';
+
+  const cards = [
+    { label: 'Data Training', value: nTrain > 0 ? nTrain + ' hari' : '-', color: '#2980b9', icon: '&#128202;' },
+    { label: 'Data Testing',  value: nTest  > 0 ? nTest  + ' hari' : '-', color: '#8e44ad', icon: '&#128203;' },
+    { label: 'Rata-rata Testing', value: formatNumber(avgAct,2) + ' kg', color: '#16a085', icon: '&#9651;' },
+    { label: 'Total |Error|', value: formatNumber(totAbsErr,2), color: '#e67e22', icon: '&#931;' },
+    { label: 'Total Error²', value: formatNumber(totSqErr,0), color: '#c0392b', icon: '&#931;e²' },
+    { label: 'Total APE', value: formatNumber(totApe,2)+'%', color: '#7f8c8d', icon: '&#931;APE' },
+    { label: 'MAE', value: formatNumber(mae,2), color: '#2980b9', icon: 'MAE',
+      note: 'MAE = Σ|e| / n', badge: maeBadge, badgeColor: maeColor, badge2: maeP.toFixed(2) + '% avg' },
+    { label: 'MAPE', value: formatNumber(mape,2)+'%',
+      color: mapeColor, icon: 'MAPE',
+      note: 'MAPE = Σ(APE) / n', badge: mapeBadge, badgeColor: mapeColor },
+    { label: 'RMSE', value: formatNumber(rmse,2), color: '#8e44ad', icon: 'RMSE',
+      note: 'RMSE = ─(Σe²/n)', badge: rmseBadge, badgeColor: rmseColor, badge2: rmseP.toFixed(2)+'% avg' },
+  ];
+  container.innerHTML = cards.map(c => `
+    <div style="background:#fff;border:1px solid #e3e8ef;border-radius:10px;padding:12px 14px;
+                box-shadow:0 1px 4px rgba(0,0,0,.06);position:relative;">
+      <div style="font-size:.72rem;color:#888;margin-bottom:2px;">${c.label}</div>
+      <div style="font-size:1.15rem;font-weight:800;color:${c.color};">${c.value}</div>
+      ${c.note   ? `<div style="font-size:.68rem;color:#aaa;margin-top:2px;">${c.note}</div>` : ''}
+      <div style="margin-top:6px;display:flex;gap:5px;align-items:center;flex-wrap:wrap;">
+        ${c.badge  ? `<span style="font-size:.64rem;padding:2px 8px;border-radius:12px;background:${c.badgeColor || c.color};color:#fff;font-weight:700;">${c.badge}</span>` : ''}
+        ${c.badge2 ? `<span style="font-size:.64rem;padding:2px 8px;border-radius:12px;background:#f1f5f9;color:#475569;font-weight:600;">${c.badge2}</span>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function buildManualVerify() {
+  const tbody = document.getElementById('manual-verify-body');
+  const sumEl = document.getElementById('manual-verify-summary');
+  if (!tbody || !manualRows.length) return;
+
+  // Tampilkan 10 baris dengan aktual > 0
+  const show = manualRows.filter(r => r.aktual > 0).slice(0, 10);
+  tbody.innerHTML = show.map((r, i) => {
+    const apeStr = r.ape !== null ? formatNumber(r.ape, 2) + '%' : '-';
+    return `<tr style="border-bottom:1px solid #f0f0f0;">
+      <td style="padding:5px 10px;border:1px solid #dee2e6;">${i+1}</td>
+      <td style="padding:5px 10px;border:1px solid #dee2e6;">${r.tanggal}</td>
+      <td style="padding:5px 10px;border:1px solid #dee2e6;font-weight:700;">${formatNumber(r.aktual,2)}</td>
+      <td style="padding:5px 10px;border:1px solid #dee2e6;color:#2980b9;">${formatNumber(r.prediksi,2)}</td>
+      <td style="padding:5px 10px;border:1px solid #dee2e6;color:${r.error>=0?'#27ae60':'#e74c3c'};"
+        >${r.error>=0?'+':''}${formatNumber(r.error,2)}</td>
+      <td style="padding:5px 10px;border:1px solid #dee2e6;">${formatNumber(r.abs_error,2)}</td>
+      <td style="padding:5px 10px;border:1px solid #dee2e6;">${formatNumber(r.sq_error,2)}</td>
+      <td style="padding:5px 10px;border:1px solid #dee2e6;font-weight:700;color:${r.ape>20?'#c0392b':r.ape>10?'#e67e22':'#27ae60'};"
+        >${apeStr}</td>
+    </tr>`;
+  }).join('');
+
+  const mae  = {{ hasil.mae  | default(0) }};
+  const mape = {{ hasil.mape | default(0) }};
+  const rmse = {{ hasil.rmse | default(0) }};
+  if (sumEl) sumEl.innerHTML =
+    `<strong>Keterangan:</strong> Menampilkan 10 data pertama (aktual &gt; 0) dari total <strong>${nTest} hari</strong> data uji.
+     Rumus: Error = Aktual &minus; Prediksi &bull; |Error| = |Aktual &minus; Prediksi| &bull; APE(%) = |Error|/Aktual &times; 100.
+     &nbsp;|&nbsp; MAE&nbsp;=&nbsp;${formatNumber(mae,2)}&nbsp;&bull;&nbsp;MAPE&nbsp;=&nbsp;${formatNumber(mape,2)}%&nbsp;&bull;&nbsp;RMSE&nbsp;=&nbsp;${formatNumber(rmse,2)}.`;
+}
+
+function buildCalcTable() {
+  const tbody = document.getElementById('calc-table-body');
+  const tfoot = document.getElementById('calc-table-foot');
+  const periodInfo = document.getElementById('tbl-period-info');
+  if (!tbody) return;
+
+  if (!testL.length || !testActuals.length || !testPreds.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Jalankan model terlebih dahulu untuk melihat tabel perhitungan.</td></tr>';
+    return;
+  }
+
+  const monthly = aggregateMonthly();
+
+  if (periodInfo && monthly.length) {
+    periodInfo.textContent = monthly[0].label + ' s/d ' + monthly[monthly.length - 1].label;
+  }
+
+  const rows = [];
+  let sumActual = 0, sumPred = 0, sumApe = 0, apeCount = 0;
+
+  monthly.forEach((m, index) => {
+    const actual = m.actual;
+    const pred   = m.pred;
+    const error  = actual - pred;
+    // APE bulanan = rata-rata APE harian dalam bulan ini (bukan dari total)
+    const ape    = m.avgApe;   // sudah dihitung per-hari di aggregateMonthly()
+
+    sumActual += actual;
+    sumPred   += pred;
+    if (ape !== null) { sumApe += ape; apeCount++; }
+
+    let rowStyle = '';
+    if (ape !== null && ape > 20) rowStyle = 'background:#fff5f5;';
+    else if (ape !== null && ape > 10) rowStyle = 'background:#fffbee;';
+
+    const apeText  = ape !== null ? formatNumber(ape, 2) + '%' : '-';
+    const apeColor = ape === null ? '' : ape > 20 ? 'color:#c0392b;font-weight:700;' : ape > 10 ? 'color:#e67e22;font-weight:600;' : 'color:#27ae60;';
+    const errColor = error >= 0 ? 'color:#27ae60;' : 'color:#e74c3c;';
+    const errSign  = error >= 0 ? '+' : '';
+
+    rows.push(`
+      <tr style="${rowStyle}">
+        <td style="color:#526273;">${index + 1}</td>
+        <td style="font-weight:600;">${m.label}</td>
+        <td style="font-weight:700;">${formatNumber(actual, 2)}</td>
+        <td style="color:#2980b9;font-weight:700;">${formatNumber(pred, 2)}</td>
+        <td style="${errColor}">${errSign}${formatNumber(error, 2)}</td>
+        <td style="${apeColor}" title="Rata-rata APE harian bulan ini">${apeText}</td>
+      </tr>
+    `);
+  });
+
+  tbody.innerHTML = rows.join('') || '<tr><td colspan="6" class="empty-state">Belum ada data uji.</td></tr>';
+
+  // Baris ringkasan di tfoot — menggunakan metrik BULANAN (utama) dan HARIAN dari Python
+  const mae  = {{ hasil.mae  | default(0) }};
+  const mape = {{ hasil.mape | default(0) }};
+  const rmse = {{ hasil.rmse | default(0) }};
+  const maeDaily  = {{ hasil.mae_daily  | default(0) }};
+  const mapeDaily = {{ hasil.mape_daily | default(0) }};
+  const rmseDaily = {{ hasil.rmse_daily | default(0) }};
+  
+  if (tfoot) tfoot.innerHTML = `
+    <tr style="background:#f0f4f8;font-weight:700;border-top:2px solid #dde2ea;">
+      <td colspan="2" style="padding:8px 10px;color:#334155;">TOTAL / RATA-RATA APE</td>
+      <td style="padding:8px 10px;">${formatNumber(sumActual,2)}</td>
+      <td style="padding:8px 10px;color:#2980b9;">${formatNumber(sumPred,2)}</td>
+      <td style="padding:8px 10px;">-</td>
+      <td style="padding:8px 10px;font-weight:700;color:${mape<20?'#27ae60':'#c0392b'};">${formatNumber(mape,2)}%</td>
+    </tr>
+    <tr style="background:#eaf3fc;">
+      <td colspan="6" style="padding:8px 10px;font-size:.8rem;">
+        <strong>Metrik Evaluasi Bulanan (Akademik & skripsi):</strong>&nbsp;
+        MAE = ${formatNumber(mae,2)} &bull; MAPE = <span style="color:${mape<20?'#27ae60':'#c0392b'};font-weight:700;">${formatNumber(mape,2)}%</span> &bull; RMSE = ${formatNumber(rmse,2)}
+        &nbsp;|&nbsp; n training = ${nTrain} hari &nbsp;|&nbsp; n testing = ${nTest} hari
+        <br>
+        <em style="color:#7f8c8d;">Metrik Evaluasi Harian (Detail): MAE = ${formatNumber(maeDaily,2)} &bull; MAPE = ${formatNumber(mapeDaily,2)}% &bull; RMSE = ${formatNumber(rmseDaily,2)} (Dipengaruhi ketiadaan aktivitas harian/nol)</em>
+      </td>
+    </tr>
+  `;
+}
+
+function downloadCalcCsv() {
+  if (!testL.length) { alert('Belum ada data perhitungan.'); return; }
+
+  const monthly = aggregateMonthly();
+  const mae  = {{ hasil.mae  | default(0) }};
+  const mape = {{ hasil.mape | default(0) }};
+  const rmse = {{ hasil.rmse | default(0) }};
+
+  const header  = ['No','Periode','Data Aktual','Prediksi ARIMAX','Error = A-P','APE (%)'];
+  const csvRows = [header.join(',')];
+
+  monthly.forEach((m, i) => {
+    const error = m.actual - m.pred;
+    const ape   = m.actual > 0 ? (Math.abs(error) / m.actual * 100).toFixed(2) : '';
+    csvRows.push([
+      i + 1,
+      '"' + m.label + '"',
+      m.actual.toFixed(2),
+      m.pred.toFixed(2),
+      error.toFixed(2),
+      ape
+    ].join(','));
+  });
+
+  // Baris summary
+  csvRows.push('');
+  csvRows.push(['Metrik','Nilai','Rumus',''].join(','));
+  csvRows.push(['MAE', mae.toFixed(2), 'Σ|e|/n', ''].join(','));
+  csvRows.push(['MAPE(%)', mape.toFixed(2), 'Σ(APE)/n', ''].join(','));
+  csvRows.push(['RMSE', rmse.toFixed(2), '─(Σe²/n)', ''].join(','));
+  csvRows.push(['n Training', nTrain, '', ''].join(','));
+  csvRows.push(['n Testing', nTest, '', ''].join(','));
+
+  const blob = new Blob(['\uFEFF' + csvRows.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = 'perhitungan_arimax_' + new Date().toISOString().slice(0,10) + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ── Auto-Tune ──────────────────────────────────────────────────────────────
+function runAutoTune() {
+  const btn    = document.getElementById('btn-auto-tune');
+  const status = document.getElementById('tune-status');
+  const maxP   = parseInt(document.getElementById('tune-max-p').value) || 5;
+  const maxD   = parseInt(document.getElementById('tune-max-d').value) || 1;
+  const maxQ   = parseInt(document.getElementById('tune-max-q').value) || 5;
+  const crit   = document.getElementById('tune-criterion').value || 'mape';
+  const totalCombos = (maxP + 1) * (maxD + 1) * (maxQ + 1);
+  btn.disabled = true;
+  status.textContent = `Menjalankan grid search ${totalCombos} kombinasi... (bisa memakan beberapa menit)`;
+
+  const tanggalAwal  = '{{ hasil.tanggal_awal | default("") }}';
+  const tanggalAkhir = '{{ hasil.tanggal_akhir | default("") }}';
+
+  fetch('/auto-tune', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      horizon      : currentHorizon,
+      tanggal_awal : tanggalAwal,
+      tanggal_akhir: tanggalAkhir,
+      max_p: maxP, max_d: maxD, max_q: maxQ,
+      criterion: crit
+    })
+  })
+  .then(r => r.json())
+  .then(data => {
+    btn.disabled = false;
+    if (data.error) { status.textContent = '\u274C ' + data.error; return; }
+    status.textContent = `\u2705 Selesai! ${data.total_success}/${data.total_tried} kombinasi berhasil. Parameter terbaik tersimpan.`;
+    document.getElementById('tune-result').style.display = 'block';
+
+    const b  = data.best;
+    const mf = data.model_final;
+    const o  = data.old;
+    const comp = document.getElementById('tune-comparison');
+    const metricRow = (label, oldV, newV, lowerBetter=true) => {
+      const oNum = parseFloat(oldV);
+      const nNum = parseFloat(newV);
+      const better = lowerBetter ? nNum < oNum : nNum > oNum;
+      const arrow  = better ? '\u25BC\u25BC' : '\u25B2\u25B2';
+      return `<tr><td style="padding:5px 10px;">${label}</td>
+        <td style="padding:5px 10px;">${isNaN(oNum)?oldV:oldV}</td>
+        <td style="padding:5px 10px;font-weight:700;color:${better?'#27ae60':'#e74c3c'};"
+          >${newV} ${arrow}</td></tr>`;
+    };
+    comp.innerHTML = `
+      <div style="border:1px solid #dee2e6;border-radius:8px;overflow:hidden;">
+        <div style="background:#f4f6fa;padding:8px 14px;font-weight:700;">Perbandingan Lama vs Terbaik</div>
+        <table style="width:100%;border-collapse:collapse;font-size:.84rem;">
+          <thead><tr style="background:#eee;">
+            <th style="padding:6px 10px;">Metrik</th><th style="padding:6px 10px;">Sebelum</th>
+            <th style="padding:6px 10px;">Sesudah</th></tr></thead><tbody>
+            ${metricRow('p',o.p,b.p)} ${metricRow('d','-',b.d)} ${metricRow('q',o.q,b.q)}
+            ${metricRow('AIC','-',b.aic)} ${metricRow('BIC','-',b.bic)}
+            ${metricRow('MAE',o.mae,mf.mae)} ${metricRow('MAPE(%)',o.mape,mf.mape)}
+            ${metricRow('RMSE',o.rmse,mf.rmse)}
+          </tbody></table>
+      </div>
+      <div style="border:1px solid #dee2e6;border-radius:8px;padding:14px;">
+        <div style="font-weight:700;margin-bottom:6px;">Hasil Terbaik (${crit.toUpperCase()})</div>
+        <div>ARIMAX(${b.p},${b.d},${b.q}) &rarr; <strong>${mf.model_name}</strong></div>
+        <div style="margin-top:4px;font-size:.82rem;">AIC: <strong>${b.aic}</strong> &bull; BIC: <strong>${b.bic}</strong></div>
+        <div style="margin-top:6px;">
+          MAE: <strong>${mf.mae}</strong> &bull;
+          MAPE: <strong style="color:${mf.mape<20?'#27ae60':'#c0392b'}">${mf.mape}%</strong> &bull;
+          RMSE: <strong>${mf.rmse}</strong>
+        </div>
+        <div style="margin-top:4px;font-size:.78rem;color:#888;">n training: ${data.n_train} &bull; n testing: ${data.n_test} &bull; avg testing: ${data.avg_test}</div>
+      </div>
+    `;
+
+    const gridBody = document.getElementById('tune-grid-body');
+    gridBody.innerHTML = data.grid_results.map((r, i) => `
+      <tr style="background:${i===0?'#eafaf1':''}">
+        <td style="padding:5px 10px;border:1px solid #dee2e6;font-weight:${i===0?'700':'400'}">${r.p}</td>
+        <td style="padding:5px 10px;border:1px solid #dee2e6;">${r.d}</td>
+        <td style="padding:5px 10px;border:1px solid #dee2e6;font-weight:${i===0?'700':'400'}">${r.q}</td>
+        <td style="padding:5px 10px;border:1px solid #dee2e6;">${r.aic}</td>
+        <td style="padding:5px 10px;border:1px solid #dee2e6;">${r.bic}</td>
+        <td style="padding:5px 10px;border:1px solid #dee2e6;">${r.mae}</td>
+        <td style="padding:5px 10px;border:1px solid #dee2e6;color:${r.mape<20?'#27ae60':r.mape<30?'#e67e22':'#c0392b'};font-weight:700;">${r.mape}%</td>
+        <td style="padding:5px 10px;border:1px solid #dee2e6;">${r.rmse}</td>
+        <td style="padding:5px 10px;border:1px solid #dee2e6;">${r.rmse_pct}%</td>
+      </tr>`).join('');
+
+    // Reload history and reload page to display new model across charts and tables
+    loadHistory();
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
+  })
+  .catch(err => {
+    btn.disabled = false;
+    status.textContent = '\u274C Error: ' + err.message;
+  });
+}
+
+// ── Riwayat Evaluasi ──────────────────────────────────────────────────────
+function loadHistory() {
+  fetch(`/api/riwayat-evaluasi?horizon=${currentHorizon}&limit=50`)
+    .then(r => r.json())
+    .then(data => {
+      const tbody = document.getElementById('history-table-body');
+      if (!tbody) return;
+      if (!data.data || !data.data.length) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:14px;color:#999;">Belum ada riwayat evaluasi.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.data.map((r, i) => `
+        <tr style="background:${i===0?'#f0fff4':''}">
+          <td style="padding:5px 10px;border:1px solid #dee2e6;">${i+1}</td>
+          <td style="padding:5px 10px;border:1px solid #dee2e6;font-size:.8rem;">${r.tgl_eval}</td>
+          <td style="padding:5px 10px;border:1px solid #dee2e6;font-weight:700;">(${r.p_order},${r.d_order},${r.q_order})</td>
+          <td style="padding:5px 10px;border:1px solid #dee2e6;">${r.mae}</td>
+          <td style="padding:5px 10px;border:1px solid #dee2e6;color:${r.mape<20?'#27ae60':'#c0392b'};font-weight:700;">${r.mape}%</td>
+          <td style="padding:5px 10px;border:1px solid #dee2e6;">${r.rmse}</td>
+          <td style="padding:5px 10px;border:1px solid #dee2e6;">${r.n_train}</td>
+          <td style="padding:5px 10px;border:1px solid #dee2e6;">${r.n_test}</td>
+          <td style="padding:5px 10px;border:1px solid #dee2e6;font-size:.76rem;color:#666;">${r.model_name||'-'}</td>
+        </tr>`).join('');
+    })
+    .catch(() => {
+      const tbody = document.getElementById('history-table-body');
+      if (tbody) tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#c0392b;">Gagal memuat riwayat.</td></tr>';
+    });
+}
+
+
+function buildSuggestions() {
+  const container = document.getElementById('suggestion-list');
+  if (!container) return;
+
+  const recentActual = actV.filter(value => value > 0).slice(-30);
+  const recentAvg = avg(recentActual.length ? recentActual : actV);
+  const forecastAvg = avg(fcV);
+  const half = Math.max(1, Math.ceil(fcV.length / 2));
+  const firstHalfAvg = avg(fcV.slice(0, half));
+  const secondHalfAvg = avg(fcV.slice(half));
+  const demandPct = recentAvg ? ((forecastAvg - recentAvg) / recentAvg) * 100 : 0;
+  const trendPct = firstHalfAvg ? ((secondHalfAvg - firstHalfAvg) / firstHalfAvg) * 100 : 0;
+  const peak = fcV.length ? Math.max(...fcV) : 0;
+  const volatilityPct = forecastAvg ? (stdDev(fcV) / forecastAvg) * 100 : 0;
+  const suggestions = [];
+
+  if (demandPct > 10 || peak > forecastAvg * 1.25) {
+    suggestions.push({
+      tag: 'Pengiriman',
+      title: 'Minta pengiriman tambahan',
+      text: `Rata-rata prediksi lebih tinggi ${formatNumber(Math.max(demandPct, 0), 1)}% dari data aktual terbaru. Siapkan pengiriman ulang sebelum tanggal dengan prediksi tertinggi agar stok tidak kosong.`
+    });
+  } else if (demandPct < -10) {
+    suggestions.push({
+      tag: 'Pengiriman',
+      title: 'Tahan pengiriman besar',
+      text: `Prediksi turun ${formatNumber(Math.abs(demandPct), 1)}% dari rata-rata aktual terbaru. Kurangi pengiriman besar dan gunakan pembelian bertahap agar stok tidak menumpuk.`
+    });
+  } else {
+    suggestions.push({
+      tag: 'Pengiriman',
+      title: 'Jaga pengiriman rutin',
+      text: 'Prediksi masih dekat dengan rata-rata penjualan terbaru. Pertahankan jadwal pengiriman normal sambil mengecek realisasi harian.'
+    });
+  }
+
+  if (trendPct < -5 || demandPct < -10) {
+    suggestions.push({
+      tag: 'Penjualan',
+      title: 'Tingkatkan penjualan',
+      text: 'Arah prediksi melemah. Dorong promosi, penawaran ke pelanggan utama, dan paket penjualan cepat untuk menjaga barang keluar tetap stabil.'
+    });
+  } else if (trendPct > 5) {
+    suggestions.push({
+      tag: 'Penjualan',
+      title: 'Amankan permintaan naik',
+      text: 'Prediksi cenderung meningkat pada paruh akhir periode. Konfirmasi pesanan pelanggan lebih awal dan prioritaskan kanal dengan serapan paling tinggi.'
+    });
+  } else {
+    suggestions.push({
+      tag: 'Penjualan',
+      title: 'Pertahankan ritme penjualan',
+      text: 'Pola prediksi relatif stabil. Fokus pada pelanggan rutin, ketersediaan stok, dan pemantauan selisih antara prediksi dan realisasi.'
+    });
+  }
+
+  if (volatilityPct > 25) {
+    suggestions.push({
+      tag: 'Operasional',
+      title: 'Siapkan stok pengaman',
+      text: `Prediksi cukup berfluktuasi dengan variasi sekitar ${formatNumber(volatilityPct, 1)}%. Buat batas stok minimum dan siapkan tenaga sortir saat prediksi melonjak.`
+    });
+  } else if (forecastAvg < recentAvg * 0.9) {
+    suggestions.push({
+      tag: 'Operasional',
+      title: 'Kendalikan stok gudang',
+      text: 'Prediksi lebih rendah dari pola aktual terbaru. Perketat stok masuk dan prioritaskan penjualan barang yang sudah tersedia.'
+    });
+  } else {
+    suggestions.push({
+      tag: 'Operasional',
+      title: 'Pantau realisasi harian',
+      text: 'Prediksi tidak terlalu berfluktuasi. Bandingkan realisasi harian dengan tabel prediksi untuk menentukan kapan perlu menambah atau menahan stok.'
+    });
+  }
+
+  container.innerHTML = suggestions.map(item => `
+    <article class="suggestion-card">
+      <span class="suggestion-tag">${item.tag}</span>
+      <h3>${item.title}</h3>
+      <p>${item.text}</p>
+    </article>
+  `).join('');
+}
+
+const baseChartOptions = {
+  responsive:true,
+  maintainAspectRatio:false,
+  animation:{ onComplete: function(){ window._chartDone = true; } },
+  plugins:{
+    legend:{ position:'top', labels:{ boxWidth:28, font:{size:11} } },
+    tooltip:{ callbacks:{ label:c => c.parsed.y != null ? ` ${c.parsed.y.toLocaleString('id-ID')} kg` : null } }
+  },
+  scales:{
+    x:{ grid:{color:'rgba(0,0,0,.03)'}, ticks:{maxTicksLimit:14, maxRotation:45, font:{size:9}} },
+    y:{ beginAtZero:false, grid:{color:'rgba(0,0,0,.04)'}, ticks:{font:{size:10}} }
+  }
+};
+
+function createLineChart(canvasId, labels, datasets, options = {}) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas || !labels.length) return null;
+  const chart = new Chart(canvas.getContext('2d'), {
+    type:'line',
+    data:{ labels, datasets },
+    options:{ ...baseChartOptions, ...options }
+  });
+  reportCharts.push(chart);
+  return chart;
+}
+
+function createCorrelationChart(canvasId, source, label, color) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas || !source || !Array.isArray(source.labels) || !source.labels.length) return null;
+
+  const labels = source.labels.map(lag => `Lag ${lag}`);
+  const confidence = Number(source.confidence);
+  const datasets = [{
+    type:'bar',
+    label,
+    data:(source.values || []).map(Number),
+    backgroundColor:color,
+    borderColor:color,
+    borderWidth:1,
+    borderRadius:4
+  }];
+
+  if (Number.isFinite(confidence)) {
+    datasets.push({
+      type:'line',
+      label:'+/- batas',
+      data:labels.map(() => confidence),
+      borderColor:'#e74c3c',
+      backgroundColor:'#e74c3c',
+      borderDash:[5,4],
+      pointRadius:0,
+      borderWidth:1
+    });
+    datasets.push({
+      type:'line',
+      label:'- batas',
+      data:labels.map(() => -confidence),
+      borderColor:'#e74c3c',
+      backgroundColor:'#e74c3c',
+      borderDash:[5,4],
+      pointRadius:0,
+      borderWidth:1
+    });
+  }
+
+  const chart = new Chart(canvas.getContext('2d'), {
+    type:'bar',
+    data:{ labels, datasets },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      animation:{ onComplete: function(){ window._chartDone = true; } },
+      plugins:{
+        legend:{display:false},
+        tooltip:{ callbacks:{ label:c => ` ${c.dataset.label}: ${formatNumber(c.parsed.y, 4)}` } }
+      },
+      scales:{
+        x:{ticks:{maxTicksLimit:8}, grid:{display:false}},
+        y:{min:-1, max:1, grid:{color:'rgba(0,0,0,.06)'}}
+      }
+    }
+  });
+  reportCharts.push(chart);
+  return chart;
+}
+
+function resizeReportCharts() {
+  reportCharts.forEach(chart => chart.resize());
+}
+
+function printReport() {
+  resizeReportCharts();
+  setTimeout(() => window.print(), 150);
+}
+
+window.addEventListener('beforeprint', resizeReportCharts);
+window.addEventListener('afterprint', resizeReportCharts);
+
+const combinedLabels = [...actL, ...fcL];
+const actualSeries = [...actV, ...Array(fcL.length).fill(null)];
+const ujiSeries = [...ujiV, ...Array(fcL.length).fill(null)];
+const forecastSeries = [
+  ...Array(Math.max(actL.length - 1, 0)).fill(null),
+  ...(actV.length ? [actV[actV.length - 1]] : []),
+  ...fcV
+];
+
+createLineChart('combined-chart', combinedLabels, [
+  {
+    label: 'Aktual',
+    data: actualSeries,
+    borderColor: '#1a2535',
+    backgroundColor: 'rgba(26,37,53,0.08)',
+    borderWidth: 2.5,
+    pointRadius: 4,
+    pointBackgroundColor: '#1a2535',
+    tension: .3,
+    fill: false,
+    spanGaps: true
+  },
+  {
+    label: 'Grafik Uji',
+    data: ujiSeries,
+    borderColor: '#2980b9',
+    backgroundColor: 'rgba(41,128,185,0.08)',
+    borderWidth: 2,
+    borderDash: [5, 5],
+    pointRadius: 3,
+    pointBackgroundColor: '#2980b9',
+    tension: .3,
+    fill: false,
+    spanGaps: false
+  },
+  {
+    label: 'Proyeksi',
+    data: forecastSeries,
+    borderColor: '#e74c3c',
+    backgroundColor: 'rgba(231,76,60,0.08)',
+    borderWidth: 2.5,
+    borderDash: [6, 4],
+    pointRadius: 3,
+    pointBackgroundColor: '#e74c3c',
+    tension: .3,
+    fill: false,
+    spanGaps: false
+  }
+]);
+
+createLineChart('actual-chart', actL, [
+  {
+    label: 'Data Aktual',
+    data: actV,
+    borderColor: '#1a2535',
+    backgroundColor: '#1a2535',
+    borderWidth: 2,
+    pointRadius: 2,
+    tension: .3,
+    fill: false
+  }
+]);
+
+createLineChart('uji-chart', actL, [
+  {
+    label: 'Data Uji',
+    data: ujiV,
+    borderColor: '#2980b9',
+    backgroundColor: '#2980b9',
+    borderWidth: 2,
+    borderDash: [5, 5],
+    pointRadius: 3,
+    tension: .3,
+    fill: false,
+    spanGaps: false
+  }
+]);
+
+function convertToWeekly(labels, values) {
+  const weeklyLabels = [];
+  const weeklyValues = [];
+  for (let i = 0; i < labels.length; i++) {
+    const val = Number(values[i]);
+    const dateStr = labels[i];
+    const parts = dateStr.split('-');
+    const year = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1;
+    const day = parseInt(parts[2], 10);
+    const baseDate = new Date(Date.UTC(year, month, day));
+    for (let w = 0; w < 4; w++) {
+      const weekDate = new Date(baseDate.getTime());
+      weekDate.setUTCDate(baseDate.getUTCDate() + w * 7);
+      const yStr = weekDate.getUTCFullYear();
+      const mStr = String(weekDate.getUTCMonth() + 1).padStart(2, '0');
+      const dStr = String(weekDate.getUTCDate()).padStart(2, '0');
+      weeklyLabels.push(`${yStr}-${mStr}-${dStr}`);
+      weeklyValues.push(val / 4.0);
+    }
+  }
+  return { labels: weeklyLabels, values: weeklyValues };
+}
+
+const weeklyProj = convertToWeekly(fcL_daily, fcV_daily);
+
+createLineChart('forecast-chart', weeklyProj.labels, [
+  {
+    label: 'Proyeksi ARIMAX (Mingguan)',
+    data: weeklyProj.values,
+    borderColor: '#27ae60',
+    backgroundColor: '#27ae60',
+    borderWidth: 2,
+    borderDash: [6, 3],
+    pointRadius: 3,
+    tension: .3,
+    fill: false
+  }
+]);
+
+createCorrelationChart('acf-chart', diagnostics.acf, 'ACF', '#2980b9');
+createCorrelationChart('pacf-chart', diagnostics.pacf, 'PACF', '#27ae60');
+buildCalcTable();
+buildStatsCards();
+buildSuggestions();
+loadHistory();
+loadExogCorrelation();
+
+function buildManualStepsExplanation() {
+  const container = document.getElementById('manual-steps-content');
+  if (!container || !testL.length) return;
+
+  let html = '';
+
+  // A. Persamaan ARIMAX
+  html += `<h3 style="margin: 0 0 8px; color: #27ae60; font-size: 1rem; border-bottom: 2px solid #27ae60; padding-bottom: 4px;">A. Persamaan Model ARIMAX(1,${modelD},0)</h3>`;
+  html += `<p>Persamaan umum model ARIMAX(1,d,0) dengan dua variabel eksogen ($X_1$: Hari Libur, $X_2$: Frekuensi Pengiriman) adalah sebagai berikut:</p>`;
+  
+  if (modelD === 1) {
+    html += `<div style="background: #f8f9fa; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 0.9rem; margin-bottom: 12px; border-left: 4px solid #27ae60;">`;
+    html += `  <strong>y─<sub>t</sub> = u<sub>t</sub> + β<sub>1</sub> X<sub>t,1</sub> + β<sub>2</sub> X<sub>t,2</sub></strong><br>`;
+    html += `  di mana u<sub>t</sub> adalah komponen sisaan yang stasioner hasil differencing d=1:<br>`;
+    html += `  <strong>u<sub>t</sub> = u<sub>t-1</sub> + ─<sub>1</sub> (u<sub>t-1</sub> - u<sub>t-2</sub>)</strong>`;
+    html += `</div>`;
+  } else {
+    html += `<div style="background: #f8f9fa; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 0.9rem; margin-bottom: 12px; border-left: 4px solid #27ae60;">`;
+    html += `  <strong>y─<sub>t</sub> = u<sub>t</sub> + β<sub>1</sub> X<sub>t,1</sub> + β<sub>2</sub> X<sub>t,2</sub></strong><br>`;
+    html += `  di mana u<sub>t</sub> adalah komponen autoregresif tingkat 1 (d=0):<br>`;
+    html += `  <strong>u<sub>t</sub> = ─<sub>1</sub> u<sub>t-1</sub></strong>`;
+    html += `</div>`;
+  }
+
+  // B. Nilai Parameter & Inisialisasi
+  html += `<h3 style="margin: 16px 0 8px; color: #27ae60; font-size: 1rem; border-bottom: 2px solid #27ae60; padding-bottom: 4px;">B. Parameter Model dan Kondisi Awal (Inisialisasi)</h3>`;
+  html += `<p>Nilai koefisien yang diperoleh dari hasil fitting model pada data training adalah:</p>`;
+  html += `<ul>`;
+  html += `  <li>Koefisien Hari Libur (β<sub>1</sub>) = <strong>${formatNumber(coefLibur, 4)}</strong></li>`;
+  html += `  <li>Koefisien Frekuensi Pengiriman (β<sub>2</sub>) = <strong>${formatNumber(coefJeda, 4)}</strong></li>`;
+  html += `  <li>Koefisien Autoregresif ─<sub>1</sub> (ar.L1) = <strong>${formatNumber(coefAr1, 4)}</strong></li>`;
+  html += `</ul>`;
+
+  html += `<p>Kondisi awal di akhir data training (t-1 = Feb 2025, t-2 = Jan 2025) adalah:</p>`;
+  html += `<ul>`;
+  html += `  <li>y<sub>t-2</sub> (Jan 2025) = <strong>${formatNumber(y36, 2)}</strong> Kg, &nbsp; X<sub>t-2,1</sub> = <strong>${xLibur36}</strong> Hari, &nbsp; X<sub>t-2,2</sub> = <strong>${xJeda36}</strong> Kali</li>`;
+  html += `  <li>y<sub>t-1</sub> (Feb 2025) = <strong>${formatNumber(y37, 2)}</strong> Kg, &nbsp; X<sub>t-1,1</sub> = <strong>${xLibur37}</strong> Hari, &nbsp; X<sub>t-1,2</sub> = <strong>${xJeda37}</strong> Kali</li>`;
+  html += `</ul>`;
+
+  // Hitung u_36 dan u_37
+  const u36 = y36 - (coefLibur * xLibur36 + coefJeda * xJeda36);
+  const u37 = y37 - (coefLibur * xLibur37 + coefJeda * xJeda37);
+  
+  html += `<p>Komponen sisaan awal dihitung dengan mengeluarkan efek variabel eksogen dari data penjualan aktual:</p>`;
+  html += `<div style="background: #f4fcf7; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 0.82rem; margin-bottom: 12px;">`;
+  html += `  u<sub>t-2</sub> (Jan 2025) = y<sub>t-2</sub> - (β<sub>1</sub> X<sub>t-2,1</sub> + β<sub>2</sub> X<sub>t-2,2</sub>)<br>`;
+  html += `  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= ${formatNumber(y36, 2)} - (${formatNumber(coefLibur, 4)} * ${xLibur36} + ${formatNumber(coefJeda, 4)} * ${xJeda36})<br>`;
+  html += `  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= ${formatNumber(y36, 2)} - (${formatNumber(coefLibur*xLibur36, 4)} + ${formatNumber(coefJeda*xJeda36, 4)})<br>`;
+  html += `  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= <strong>${formatNumber(u36, 4)}</strong><br><br>`;
+  
+  html += `  u<sub>t-1</sub> (Feb 2025) = y<sub>t-1</sub> - (β<sub>1</sub> X<sub>t-1,1</sub> + β<sub>2</sub> X<sub>t-1,2</sub>)<br>`;
+  html += `  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= ${formatNumber(y37, 2)} - (${formatNumber(coefLibur, 4)} * ${xLibur37} + ${formatNumber(coefJeda, 4)} * ${xJeda37})<br>`;
+  html += `  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= ${formatNumber(y37, 2)} - (${formatNumber(coefLibur*xLibur37, 4)} + ${formatNumber(coefJeda*xJeda37, 4)})<br>`;
+  html += `  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= <strong>${formatNumber(u37, 4)}</strong>`;
+  html += `</div>`;
+
+  // C. Perhitungan Prediksi Periode demi Periode
+  html += `<h3 style="margin: 16px 0 8px; color: #27ae60; font-size: 1rem; border-bottom: 2px solid #27ae60; padding-bottom: 4px;">C. Perhitungan Prediksi Data Uji Periode demi Periode</h3>`;
+  html += `<p>Proses substitusi numerik untuk setiap periode data uji (Maret s.d. Desember 2025) adalah sebagai berikut:</p>`;
+
+  let prev_u2 = u36;
+  let prev_u1 = u37;
+  let sumAbsErr = 0;
+  let sumSqErr = 0;
+  let sumApe = 0;
+  let resultsTable = [];
+
+  testL.forEach((dateStr, i) => {
+    const ym = dateStr.slice(0, 7);
+    const label = labelBulan(ym);
+    const act = Number(testActuals[i]);
+    const x1 = Number(testExogLibur[i] || 0);
+    const x2 = Number(testExogJeda[i] || 0);
+
+    // Hitung u_t
+    let ut = 0;
+    let u_formula_text = '';
+    let u_sub_text = '';
+    
+    if (modelD === 1) {
+      ut = prev_u1 + coefAr1 * (prev_u1 - prev_u2);
+      u_formula_text = `u<sub>t</sub> = u<sub>t-1</sub> + ─<sub>1</sub> (u<sub>t-1</sub> - u<sub>t-2</sub>)`;
+      u_sub_text = `${formatNumber(prev_u1, 4)} + (${formatNumber(coefAr1, 4)}) * (${formatNumber(prev_u1, 4)} - ${formatNumber(prev_u2, 4)})<br>` +
+                   ` &nbsp;&nbsp;&nbsp;&nbsp; = ${formatNumber(prev_u1, 4)} + (${formatNumber(coefAr1, 4)}) * (${formatNumber(prev_u1 - prev_u2, 4)})<br>` +
+                   ` &nbsp;&nbsp;&nbsp;&nbsp; = ${formatNumber(prev_u1, 4)} + (${formatNumber(coefAr1 * (prev_u1 - prev_u2), 4)})<br>` +
+                   ` &nbsp;&nbsp;&nbsp;&nbsp; = <strong>${formatNumber(ut, 4)}</strong>`;
+    } else {
+      ut = coefAr1 * prev_u1;
+      u_formula_text = `u<sub>t</sub> = ─<sub>1</sub> u<sub>t-1</sub>`;
+      u_sub_text = `${formatNumber(coefAr1, 4)} * ${formatNumber(prev_u1, 4)}<br>` +
+                   ` &nbsp;&nbsp;&nbsp;&nbsp; = <strong>${formatNumber(ut, 4)}</strong>`;
+    }
+
+    // Hitung y_t
+    const reg_effect = coefLibur * x1 + coefJeda * x2;
+    const yhat = ut + reg_effect;
+    const yhat_clipped = Math.max(0, yhat);
+
+    const err = act - yhat_clipped;
+    const abs_err = Math.abs(err);
+    const sq_err = err * err;
+    const ape = act > 0 ? (abs_err / act) * 100 : 0;
+
+    sumAbsErr += abs_err;
+    sumSqErr += sq_err;
+    sumApe += ape;
+
+    resultsTable.push({
+      label, act, pred: yhat_clipped, err, abs_err, sq_err, ape
+    });
+
+    html += `<div style="border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; margin-bottom: 12px; background: #fff;">`;
+    html += `  <strong style="color: #2c3e50; font-size: 0.88rem;">Periode ${i+1}: ${label}</strong><br>`;
+    html += `  &bull; Variabel Eksogen: X<sub>1</sub> = <strong>${x1}</strong> Hari, X<sub>2</sub> = <strong>${x2}</strong> Kali<br>`;
+    html += `  &bull; Perhitungan Komponen Sisaan (u<sub>t</sub>):<br>`;
+    html += `  <span style="font-family: monospace; font-size: 0.8rem; padding-left: 14px; display: block; color: #555;">`;
+    html += `    ${u_formula_text}<br>`;
+    html += `    u<sub>t</sub> = ${u_sub_text}`;
+    html += `  </span>`;
+    html += `  &bull; Perhitungan Prediksi Penjualan (y─<sub>t</sub>):<br>`;
+    html += `  <span style="font-family: monospace; font-size: 0.8rem; padding-left: 14px; display: block; color: #555;">`;
+    html += `    y─<sub>t</sub> = u<sub>t</sub> + β<sub>1</sub> X<sub>t,1</sub> + β<sub>2</sub> X<sub>t,2</sub><br>`;
+    html += `    y─<sub>t</sub> = ${formatNumber(ut, 4)} + (${formatNumber(coefLibur, 4)} * ${x1}) + (${formatNumber(coefJeda, 4)} * ${x2})<br>`;
+    html += `    y─<sub>t</sub> = ${formatNumber(ut, 4)} + ${formatNumber(coefLibur * x1, 4)} + ${formatNumber(coefJeda * x2, 4)}<br>`;
+    html += `    y─<sub>t</sub> = <strong>${formatNumber(yhat_clipped, 2)} Kg</strong>`;
+    html += `  </span>`;
+    html += `  &bull; Evaluasi Kesalahan (Error):<br>`;
+    html += `  <span style="font-family: monospace; font-size: 0.8rem; padding-left: 14px; display: block; color: #555;">`;
+    html += `    Error (e) = Aktual - Prediksi = ${formatNumber(act, 2)} - ${formatNumber(yhat_clipped, 2)} = <strong>${formatNumber(err, 2)}</strong><br>`;
+    html += `    |Error| = <strong>${formatNumber(abs_err, 2)}</strong><br>`;
+    html += `    Error² = (${formatNumber(err, 2)})² = <strong>${formatNumber(sq_err, 2)}</strong><br>`;
+    html += `    APE = (|Error| / Aktual) * 100% = (${formatNumber(abs_err, 2)} / ${formatNumber(act, 2)}) * 100% = <strong>${formatNumber(ape, 2)}%</strong>`;
+    html += `  </span>`;
+    html += `</div>`;
+
+    // update state
+    prev_u2 = prev_u1;
+    prev_u1 = ut;
+  });
+
+  // D. Tabel Rekapitulasi
+  html += `<h3 style="margin: 16px 0 8px; color: #27ae60; font-size: 1rem; border-bottom: 2px solid #27ae60; padding-bottom: 4px;">D. Tabel Rekapitulasi Perhitungan Penjualan</h3>`;
+  html += `<div style="overflow-x:auto;">`;
+  html += `  <table style="width:100%; border-collapse:collapse; font-size:0.78rem; margin-bottom:12px;">`;
+  html += `    <thead><tr style="background:#f4f6fa; border-bottom: 2px solid #dee2e6;">`;
+  html += `      <th style="padding:6px 8px; border:1px solid #dee2e6; text-align:center;">No</th>`;
+  html += `      <th style="padding:6px 8px; border:1px solid #dee2e6; text-align:left;">Bulan</th>`;
+  html += `      <th style="padding:6px 8px; border:1px solid #dee2e6; text-align:right;">Aktual (A)</th>`;
+  html += `      <th style="padding:6px 8px; border:1px solid #dee2e6; text-align:right;">Prediksi (P)</th>`;
+  html += `      <th style="padding:6px 8px; border:1px solid #dee2e6; text-align:right;">Error (A-P)</th>`;
+  html += `      <th style="padding:6px 8px; border:1px solid #dee2e6; text-align:right;">|Error|</th>`;
+  html += `      <th style="padding:6px 8px; border:1px solid #dee2e6; text-align:right;">Error²</th>`;
+  html += `      <th style="padding:6px 8px; border:1px solid #dee2e6; text-align:right;">APE (%)</th>`;
+  html += `    </tr></thead>`;
+  html += `    <tbody>`;
+  
+  resultsTable.forEach((r, idx) => {
+    html += `    <tr>`;
+    html += `      <td style="padding:5px 8px; border:1px solid #dee2e6; text-align:center;">${idx+1}</td>`;
+    html += `      <td style="padding:5px 8px; border:1px solid #dee2e6;">${r.label}</td>`;
+    html += `      <td style="padding:5px 8px; border:1px solid #dee2e6; text-align:right; font-weight:700;">${formatNumber(r.act, 2)}</td>`;
+    html += `      <td style="padding:5px 8px; border:1px solid #dee2e6; text-align:right; color:#2980b9;">${formatNumber(r.pred, 2)}</td>`;
+    html += `      <td style="padding:5px 8px; border:1px solid #dee2e6; text-align:right; color:${r.err>=0?'#27ae60':'#e74c3c'};">${r.err>=0?'+':''}${formatNumber(r.err, 2)}</td>`;
+    html += `      <td style="padding:5px 8px; border:1px solid #dee2e6; text-align:right;">${formatNumber(r.abs_err, 2)}</td>`;
+    html += `      <td style="padding:5px 8px; border:1px solid #dee2e6; text-align:right;">${formatNumber(r.sq_err, 2)}</td>`;
+    html += `      <td style="padding:5px 8px; border:1px solid #dee2e6; text-align:right; font-weight:700; color:${r.ape>20?'#c0392b':r.ape>10?'#e67e22':'#27ae60'};">${formatNumber(r.ape, 2)}%</td>`;
+    html += `    </tr>`;
+  });
+
+  html += `    <tr style="background:#f0f4f8; font-weight:700; border-top:2px solid #dde2ea;">`;
+  html += `      <td colspan="2" style="padding:6px 8px; border:1px solid #dee2e6;">Jumlah</td>`;
+  html += `      <td style="padding:6px 8px; border:1px solid #dee2e6; text-align:right;">-</td>`;
+  html += `      <td style="padding:6px 8px; border:1px solid #dee2e6; text-align:right;">-</td>`;
+  html += `      <td style="padding:6px 8px; border:1px solid #dee2e6; text-align:right;">-</td>`;
+  html += `      <td style="padding:6px 8px; border:1px solid #dee2e6; text-align:right;">${formatNumber(sumAbsErr, 2)}</td>`;
+  html += `      <td style="padding:6px 8px; border:1px solid #dee2e6; text-align:right;">${formatNumber(sumSqErr, 2)}</td>`;
+  html += `      <td style="padding:6px 8px; border:1px solid #dee2e6; text-align:right;">${formatNumber(sumApe, 2)}%</td>`;
+  html += `    </tr>`;
+  html += `    </tbody>`;
+  html += `  </table>`;
+  html += `</div>`;
+
+  // E. Perhitungan Metrik Akurasi
+  const n = testL.length;
+  const mae = sumAbsErr / n;
+  const mape = sumApe / n;
+  const rmse = Math.sqrt(sumSqErr / n);
+
+  html += `<h3 style="margin: 16px 0 8px; color: #27ae60; font-size: 1rem; border-bottom: 2px solid #27ae60; padding-bottom: 4px;">E. Perhitungan Metrik Akurasi Secara Manual</h3>`;
+  
+  html += `<p><strong>1. Mean Absolute Error (MAE)</strong></p>`;
+  html += `<div style="background:#fafafa; padding:10px; border-radius:6px; font-family:monospace; margin-bottom:12px;">`;
+  html += `  MAE = (Σ |e<sub>t</sub>|) / n<br>`;
+  html += `  MAE = ${formatNumber(sumAbsErr, 2)} / ${n}<br>`;
+  html += `  <strong>MAE = ${formatNumber(mae, 2)} Kg</strong>`;
+  html += `</div>`;
+
+  html += `<p><strong>2. Mean Absolute Percentage Error (MAPE)</strong></p>`;
+  html += `<div style="background:#fafafa; padding:10px; border-radius:6px; font-family:monospace; margin-bottom:12px;">`;
+  html += `  MAPE = (Σ APE<sub>t</sub>) / n<br>`;
+  html += `  MAPE = ${formatNumber(sumApe, 2)}% / ${n}<br>`;
+  html += `  <strong>MAPE = ${formatNumber(mape, 2)}%</strong>`;
+  html += `</div>`;
+
+  html += `<p><strong>3. Root Mean Squared Error (RMSE)</strong></p>`;
+  html += `<div style="background:#fafafa; padding:10px; border-radius:6px; font-family:monospace; margin-bottom:12px;">`;
+  html += `  RMSE = ─( (Σ e<sub>t</sub>²) / n )<br>`;
+  html += `  RMSE = ─( ${formatNumber(sumSqErr, 2)} / ${n} )<br>`;
+  html += `  RMSE = ─( ${formatNumber(sumSqErr / n, 2)} )<br>`;
+  html += `  <strong>RMSE = ${formatNumber(rmse, 2)} Kg</strong>`;
+  html += `</div>`;
+
+  // F. Interpretasi Hasil
+  let category = '';
+  let color = '';
+  if (mape < 10) { category = 'Sangat Baik (Highly Accurate Forecasting)'; color = '#27ae60'; }
+  else if (mape <= 20) { category = 'Baik (Good Forecasting)'; color = '#16a085'; }
+  else if (mape <= 50) { category = 'Cukup (Reasonable Forecasting)'; color = '#e67e22'; }
+  else { category = 'Kurang/Buruk (Inaccurate Forecasting)'; color = '#c0392b'; }
+
+  html += `<h3 style="margin: 16px 0 8px; color: #27ae60; font-size: 1rem; border-bottom: 2px solid #27ae60; padding-bottom: 4px;">F. Interpretasi Hasil Evaluasi</h3>`;
+  html += `<p>Berdasarkan kriteria evaluasi nilai MAPE (menurut Lewis, 1982):</p>`;
+  html += `<ul>`;
+  html += `  <li>&lt; 10%: Peramalannya <strong>Sangat Baik</strong></li>`;
+  html += `  <li>10% - 20%: Peramalannya <strong>Baik</strong></li>`;
+  html += `  <li>20% - 50%: Peramalannya <strong>Cukup</strong></li>`;
+  html += `  <li>&gt; 50%: Peramalannya <strong>Buruk</strong></li>`;
+  html += `</ul>`;
+  html += `<p>Model ARIMAX bulanan menghasilkan nilai MAPE sebesar <strong style="color: ${color}; font-size: 1.05rem;">${formatNumber(mape, 2)}%</strong> yang masuk ke dalam kategori <strong style="color: ${color}; font-size: 1.05rem;">${category}</strong>.</p>`;
+
+  container.innerHTML = html;
+}
+
+function loadExogCorrelation() {
+  fetch('/api/exog-correlation')
+    .then(r => r.json())
+    .then(data => {
+      const tbody = document.getElementById('exog-table-body');
+      if (!tbody) return;
+      if (!data.data || !data.data.length) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:14px;color:#999;">Belum ada analisis korelasi eksogen.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.data.map(r => {
+        const isKeep = r.recommendation === 'KEEP';
+        const recBadge = isKeep
+          ? '<span style="background:#eafaf1;color:#27ae60;padding:4px 10px;border-radius:20px;font-weight:700;font-size:.76rem;">KEEP</span>'
+          : '<span style="background:#f5f7fa;color:#7f8c8d;padding:4px 10px;border-radius:20px;font-weight:600;font-size:.76rem;">CONSIDER REMOVING</span>';
+        
+        let varName = r.variable;
+        if (varName === 'barang_masuk') varName = 'Barang Masuk (Stok Masuk)';
+        else if (varName === 'x_libur') varName = 'Hari Libur (Eksogen)';
+        else if (varName === 'x_frekuensi_pengiriman') varName = 'Frekuensi Pengiriman (Eksogen)';
+
+        return `
+          <tr>
+            <td style="padding:8px 10px;border:1px solid #dee2e6;font-weight:600;">${varName}</td>
+            <td style="padding:8px 10px;border:1px solid #dee2e6;text-align:center;font-weight:700;color:${r.pearson_corr > 0 ? '#27ae60' : '#e74c3c'};">${r.pearson_corr > 0 ? '+' : ''}${formatNumber(r.pearson_corr, 4)}</td>
+            <td style="padding:8px 10px;border:1px solid #dee2e6;text-align:center;font-weight:700;">${formatNumber(r.contribution_pct, 2)}%</td>
+            <td style="padding:8px 10px;border:1px solid #dee2e6;text-align:center;color:#666;">${r.n_active} hari</td>
+            <td style="padding:8px 10px;border:1px solid #dee2e6;text-align:center;">${recBadge}</td>
+          </tr>
+        `;
+      }).join('');
+    })
+    .catch(() => {
+      const tbody = document.getElementById('exog-table-body');
+      if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#c0392b;">Gagal memuat analisis eksogen.</td></tr>';
+    });
+}
+
+{% if autoprint|default(false) %}
+setTimeout(printReport, 1300);
+{% endif %}
+</script>
+{% endblock %}
+
+
