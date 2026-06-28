@@ -110,6 +110,19 @@ else:
             self._cn.row_factory = _sqlite3.Row
             self._cn.execute("PRAGMA journal_mode=WAL")
 
+            # Mock MySQL DATE_FORMAT function for SQLite
+            def _date_format(val, fmt):
+                if not val: return val
+                try:
+                    import datetime
+                    val_str = str(val)
+                    if len(val_str) > 10: dt = datetime.datetime.strptime(val_str[:19], '%Y-%m-%d %H:%M:%S')
+                    else: dt = datetime.datetime.strptime(val_str[:10], '%Y-%m-%d')
+                    fmt = fmt.replace('%i', '%M') # MySQL %i to Python %M
+                    return dt.strftime(fmt)
+                except Exception: return val
+            self._cn.create_function("DATE_FORMAT", 2, _date_format)
+
         def cursor(self, dictionary=False, buffered=False):
             return _SQLiteCursor(self._cn.cursor(), dictionary=dictionary)
 
