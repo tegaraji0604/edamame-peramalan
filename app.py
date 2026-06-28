@@ -147,6 +147,9 @@ else:
                 lambda m: f'ALTER TABLE {m.group(1)} RENAME COLUMN {m.group(2)} TO {m.group(3)}',
                 q, flags=_re.I
             )
+            # AFTER col_name → tidak didukung SQLite, hapus saja
+            q = _re.sub(r'\s+AFTER\s+\w+', '', q, flags=_re.I)
+
             return q
 
         def execute(self, query, params=None):
