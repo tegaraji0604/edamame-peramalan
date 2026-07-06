@@ -18,7 +18,6 @@ from flask_cors import CORS
 CORS(app)
 
 FORECAST_HORIZONS = {
-    1: "1 Bulan",
     3: "3 Bulan",
     6: "6 Bulan",
     12: "12 Bulan",
