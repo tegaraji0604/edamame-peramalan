@@ -83,17 +83,17 @@ def load_hasil_tmp():
 #   MYSQL_PASSWORD = (dari Aiven)
 #   MYSQL_DATABASE = (dari Aiven, default: defaultdb)
 # ── DB Mode: SQLite (default) atau MySQL (kalau ada MYSQL_HOST) ──────────────
-_USE_MYSQL = bool(os.environ.get('MYSQL_HOST'))
+_USE_MYSQL = True
 
 if _USE_MYSQL:
     import mysql.connector
     from mysql.connector import Error
     DB_CONFIG = {
-        'host':     os.environ.get('MYSQL_HOST', 'localhost'),
+        'host':     os.environ.get('MYSQL_HOST', 'sql12.freesqldatabase.com'),
         'port':     int(os.environ.get('MYSQL_PORT', 3306)),
-        'user':     os.environ.get('MYSQL_USER', 'root'),
-        'password': os.environ.get('MYSQL_PASSWORD', ''),
-        'database': os.environ.get('MYSQL_DATABASE', 'edamame_peramalan'),
+        'user':     os.environ.get('MYSQL_USER', 'sql12832390'),
+        'password': os.environ.get('MYSQL_PASSWORD', 'MnCrYARLpI'),
+        'database': os.environ.get('MYSQL_DATABASE', 'sql12832390'),
         'ssl_disabled': False,
     }
     def get_db():
