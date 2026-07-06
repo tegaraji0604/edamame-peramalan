@@ -950,9 +950,9 @@ def delete_all_data():
     if conn:
         try:
             cur = conn.cursor()
-            cur.execute("TRUNCATE TABLE data_histori")
-            cur.execute("TRUNCATE TABLE hasil_peramalan")
-            cur.execute("TRUNCATE TABLE evaluasi_model")
+            cur.execute("DELETE FROM data_histori")
+            cur.execute("DELETE FROM hasil_peramalan")
+            cur.execute("DELETE FROM evaluasi_model")
             conn.commit()
             flash('Semua data berhasil dihapus.', 'success')
         finally:
@@ -1132,25 +1132,7 @@ def run_model(p, d, q, horizon, tanggal_awal=None, tanggal_akhir=None, split_rat
             a_val = float(y_arr[i])
             p_val = float(hist_preds[i])          # langsung dari statsmodels
 
-            # --- HARDCODE OVERRIDE UNTUK KEBUTUHAN SIDANG MAHASISWA ---
-            if p == 1 and d == 0 and q == 1 and len(y.index) == 48:
-                if i == 40: # Mei 2025
-                    a_val, p_val = 2386.0, 2488.89
-                elif i == 41: # Juni 2025
-                    a_val, p_val = 11426.0, 12955.14
-                elif i == 42: # Juli 2025
-                    a_val, p_val = 12026.0, 13794.85
-                elif i == 43: # Agustus 2025
-                    a_val, p_val = 14537.0, 14231.19
-                elif i == 44: # September 2025
-                    a_val, p_val = 11837.0, 13382.16
-                elif i == 45: # Oktober 2025
-                    a_val, p_val = 14044.0, 14156.07
-                elif i == 46: # November 2025
-                    a_val, p_val = 11616.0, 13533.75
-                elif i == 47: # Desember 2025
-                    a_val, p_val = 13299.0, 13249.99
-            # -----------------------------------------------------------
+
 
             err_i = a_val - p_val
             ae_i  = abs(err_i)
@@ -1196,18 +1178,7 @@ def run_model(p, d, q, horizon, tanggal_awal=None, tanggal_akhir=None, split_rat
         future_preds = np.clip(np.array(future_preds, dtype=float), 0, None)
         future_preds_list = [round(float(v), 2) for v in future_preds]
 
-        # --- HARDCODE OVERRIDE UNTUK KEBUTUHAN SIDANG MAHASISWA ---
-        if p == 1 and d == 0 and q == 1:
-            mae_val = 916.34
-            rmse_val = 1206.83
-            mape_val = 8.15
-            mae_percent = 8.04
-            rmse_percent = 10.59
-            
-            # Jika user meminta horizon=8 dan prediksi dari Mei 2025 s.d. Des 2025
-            if horizon == 8 and len(future_dates) > 0 and future_dates[0].year == 2025 and future_dates[0].month == 5:
-                future_preds_list = [2488.89, 12955.14, 13794.85, 14231.19, 13382.16, 14156.07, 13533.75, 13249.99]
-        # -----------------------------------------------------------
+
 
         # Save forecasts to database
         cur2 = conn.cursor()
@@ -1265,17 +1236,7 @@ def run_model(p, d, q, horizon, tanggal_awal=None, tanggal_akhir=None, split_rat
         test_actuals_daily = [round(float(v), 2) for v in y.tolist()]
         test_preds_daily   = [round(float(v), 2) for v in hist_preds.tolist()]
 
-        # --- HARDCODE OVERRIDE UNTUK GRAFIK KEBUTUHAN SIDANG MAHASISWA ---
-        if p == 1 and d == 0 and q == 1 and len(act_vals_monthly) == 48:
-            override_a = [2386.0, 11426.0, 12026.0, 14537.0, 11837.0, 14044.0, 11616.0, 13299.0]
-            override_p = [2488.89, 12955.14, 13794.85, 14231.19, 13382.16, 14156.07, 13533.75, 13249.99]
-            for idx in range(8):
-                act_vals_monthly[40+idx] = override_a[idx]
-                hist_preds_monthly[40+idx] = override_p[idx]
-                uji_vals_monthly[40+idx] = override_p[idx]
-                test_actuals_daily[40+idx] = override_a[idx]
-                test_preds_daily[40+idx] = override_p[idx]
-        # -----------------------------------------------------------------
+
 
         params    = res_full.params.to_dict()
         coef_libur= float(params.get('x_libur', 0.0))
