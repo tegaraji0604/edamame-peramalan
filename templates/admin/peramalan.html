@@ -475,8 +475,10 @@
         <div class="config-field">
           <div class="order-label">Rasio Data</div>
           <select name="split_ratio" class="form-control">
-            <option value="80:20" {{ 'selected' if split_ratio == '80:20' or not split_ratio else '' }}>80:20 (Default)</option>
+            <option value="60:40" {{ 'selected' if split_ratio == '60:40' else '' }}>60:40</option>
             <option value="70:30" {{ 'selected' if split_ratio == '70:30' else '' }}>70:30</option>
+            <option value="80:20" {{ 'selected' if split_ratio == '80:20' or not split_ratio else '' }}>80:20 (Default)</option>
+            <option value="90:10" {{ 'selected' if split_ratio == '90:10' else '' }}>90:10</option>
           </select>
         </div>
 
@@ -589,6 +591,24 @@
             </tr>
           </thead>
           <tbody>
+            <tr style="{% if hasil and hasil.split_ratio == '60:40' %}background: #eafaf1; font-weight: 600; border-left: 3px solid #27ae60;{% endif %}">
+              <td style="padding: 12px; font-size: 0.78rem;"><strong>60:40</strong></td>
+              <td style="padding: 12px; font-size: 0.78rem;">{{ hasil.train_60|default(28) }} Bulan</td>
+              <td style="padding: 12px; font-size: 0.78rem;">{{ hasil.test_60|default(20) }} Bulan</td>
+              <td style="padding: 12px; font-size: 0.78rem; color: #2980b9;">{{ hasil.mae_60|default('--') }}</td>
+              <td style="padding: 12px; font-size: 0.78rem; color: #e74c3c;">{{ hasil.rmse_60|default('--') }}</td>
+              <td style="padding: 12px; font-size: 0.78rem; color: #27ae60;">{{ hasil.mape_60|default('--') }}{% if hasil.mape_60 %}%{% endif %}</td>
+              <td style="padding: 12px; font-size: 0.74rem; color: #526273; line-height: 1.4; font-weight: normal;">
+                Data training paling sedikit, data testing paling banyak. Cocok untuk menguji generalisasi model, namun pola historis yang dipelajari kurang mendalam.
+              </td>
+              <td style="padding: 12px; text-align: center; vertical-align: middle;">
+                {% if hasil and hasil.split_ratio == '60:40' %}
+                  <span style="background: #27ae60; color: #fff; padding: 3px 10px; border-radius: 12px; font-size: 0.7rem; font-weight: 700;">Aktif</span>
+                {% else %}
+                  <span style="color: #95a5a6; font-size: 0.7rem;">-</span>
+                {% endif %}
+              </td>
+            </tr>
             <tr style="{% if hasil and hasil.split_ratio == '70:30' %}background: #eafaf1; font-weight: 600; border-left: 3px solid #27ae60;{% endif %}">
               <td style="padding: 12px; font-size: 0.78rem;"><strong>70:30</strong></td>
               <td style="padding: 12px; font-size: 0.78rem;">{{ hasil.train_70|default(34) }} Bulan</td>
@@ -620,6 +640,24 @@
               <td style="padding: 12px; text-align: center; vertical-align: middle;">
                 {% if not hasil or hasil.split_ratio == '80:20' or not hasil.split_ratio %}
                   <span style="background: #27ae60; color: #fff; padding: 3px 10px; border-radius: 12px; font-size: 0.7rem; font-weight: 700;">Aktif (Dipilih)</span>
+                {% else %}
+                  <span style="color: #95a5a6; font-size: 0.7rem;">-</span>
+                {% endif %}
+              </td>
+            </tr>
+            <tr style="{% if hasil and hasil.split_ratio == '90:10' %}background: #eafaf1; font-weight: 600; border-left: 3px solid #27ae60;{% endif %}">
+              <td style="padding: 12px; font-size: 0.78rem;"><strong>90:10</strong></td>
+              <td style="padding: 12px; font-size: 0.78rem;">{{ hasil.train_90|default(43) }} Bulan</td>
+              <td style="padding: 12px; font-size: 0.78rem;">{{ hasil.test_90|default(5) }} Bulan</td>
+              <td style="padding: 12px; font-size: 0.78rem; color: #2980b9;">{{ hasil.mae_90|default('--') }}</td>
+              <td style="padding: 12px; font-size: 0.78rem; color: #e74c3c;">{{ hasil.rmse_90|default('--') }}</td>
+              <td style="padding: 12px; font-size: 0.78rem; color: #27ae60;">{{ hasil.mape_90|default('--') }}{% if hasil.mape_90 %}%{% endif %}</td>
+              <td style="padding: 12px; font-size: 0.74rem; color: #526273; line-height: 1.4; font-weight: normal;">
+                Data training paling banyak, data testing paling sedikit. Model belajar lebih mendalam namun evaluasi terbatas pada sedikit data uji.
+              </td>
+              <td style="padding: 12px; text-align: center; vertical-align: middle;">
+                {% if hasil and hasil.split_ratio == '90:10' %}
+                  <span style="background: #27ae60; color: #fff; padding: 3px 10px; border-radius: 12px; font-size: 0.7rem; font-weight: 700;">Aktif</span>
                 {% else %}
                   <span style="color: #95a5a6; font-size: 0.7rem;">-</span>
                 {% endif %}

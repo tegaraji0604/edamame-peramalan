@@ -1061,10 +1061,17 @@ def run_model(p, d, q, horizon, tanggal_awal=None, tanggal_akhir=None, split_rat
         # STEP 3 – Hitung metrik evaluasi IN-SAMPLE (Seluruh data) agar SESUAI Excel Pengguna
         # ─────────────────────────────────────────────────────────────────────────────
         def evaluate_split(ratio_str):
-            if ratio_str == '70:30':
-                split_idx = 34 if n == 48 else int(n * 0.7)
+            ratio_map = {
+                '60:40': 0.6,
+                '70:30': 0.7,
+                '80:20': 0.8,
+                '90:10': 0.9,
+            }
+            ratio = ratio_map.get(ratio_str, 0.8)
+            if n == 48:
+                split_idx = int(48 * ratio)
             else:
-                split_idx = 40 if n == 48 else int(n * 0.8)
+                split_idx = int(n * ratio)
 
             if split_idx < 5 or split_idx >= n:
                 split_idx = int(n * 0.8)
@@ -1092,28 +1099,32 @@ def run_model(p, d, q, horizon, tanggal_awal=None, tanggal_akhir=None, split_rat
 
             return mae_v, mape_v, rmse_v, split_idx
 
-        # Jalankan evaluasi untuk kedua skenario rasio pembagian data
+        # Jalankan evaluasi untuk semua skenario rasio pembagian data
+        mae_60, mape_60, rmse_60, split_idx_60 = evaluate_split('60:40')
         mae_70, mape_70, rmse_70, split_idx_70 = evaluate_split('70:30')
         mae_80, mape_80, rmse_80, split_idx_80 = evaluate_split('80:20')
+        mae_90, mape_90, rmse_90, split_idx_90 = evaluate_split('90:10')
 
         # Tentukan metrik aktif berdasarkan rasio pilihan pengguna
-        if split_ratio == '70:30':
-            mae_val = mae_70
-            mape_val = mape_70
-            rmse_val = rmse_70
+        if split_ratio == '60:40':
+            mae_val, mape_val, rmse_val = mae_60, mape_60, rmse_60
+            n_train = split_idx_60
+            n_test = n - split_idx_60
+            avg_actual = float(np.mean(y[split_idx_60:])) if (n - split_idx_60) > 0 else 1.0
+        elif split_ratio == '70:30':
+            mae_val, mape_val, rmse_val = mae_70, mape_70, rmse_70
             n_train = split_idx_70
             n_test = n - split_idx_70
+            avg_actual = float(np.mean(y[split_idx_70:])) if (n - split_idx_70) > 0 else 1.0
+        elif split_ratio == '90:10':
+            mae_val, mape_val, rmse_val = mae_90, mape_90, rmse_90
+            n_train = split_idx_90
+            n_test = n - split_idx_90
+            avg_actual = float(np.mean(y[split_idx_90:])) if (n - split_idx_90) > 0 else 1.0
         else:
-            mae_val = mae_80
-            mape_val = mape_80
-            rmse_val = rmse_80
+            mae_val, mape_val, rmse_val = mae_80, mape_80, rmse_80
             n_train = split_idx_80
             n_test = n - split_idx_80
-
-        # Rata-rata data testing untuk menghitung persentase
-        if split_ratio == '70:30':
-            avg_actual = float(np.mean(y[split_idx_70:])) if (n - split_idx_70) > 0 else 1.0
-        else:
             avg_actual = float(np.mean(y[split_idx_80:])) if (n - split_idx_80) > 0 else 1.0
 
         mae_percent  = (mae_val  / avg_actual * 100) if avg_actual else 0.0
@@ -1267,6 +1278,11 @@ def run_model(p, d, q, horizon, tanggal_awal=None, tanggal_akhir=None, split_rat
             test_exog_libur=json.dumps(test_exog_libur),
             test_exog_jeda=json.dumps(test_exog_jeda),
             split_ratio=split_ratio,
+            mae_60=round(mae_60, 2),
+            mape_60=round(mape_60, 2),
+            rmse_60=round(rmse_60, 2),
+            train_60=split_idx_60,
+            test_60=n - split_idx_60,
             mae_70=round(mae_70, 2),
             mape_70=round(mape_70, 2),
             rmse_70=round(rmse_70, 2),
@@ -1277,6 +1293,11 @@ def run_model(p, d, q, horizon, tanggal_awal=None, tanggal_akhir=None, split_rat
             rmse_80=round(rmse_80, 2),
             train_80=split_idx_80,
             test_80=n - split_idx_80,
+            mae_90=round(mae_90, 2),
+            mape_90=round(mape_90, 2),
+            rmse_90=round(rmse_90, 2),
+            train_90=split_idx_90,
+            test_90=n - split_idx_90,
             # Metrik ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â dibulatkan ke 2 desimal untuk tampilan
             mae=round(mae_val, 2),
             mape=round(mape_val, 2),
