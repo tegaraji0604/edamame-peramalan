@@ -1069,14 +1069,14 @@ def run_model(p, d, q, horizon, tanggal_awal=None, tanggal_akhir=None, split_rat
             if split_idx < 5 or split_idx >= n:
                 split_idx = int(n * 0.8)
 
-            # Excel pengguna menghitung error dari seluruh baris (In-Sample)
-            # Jadi kita hitung metric terhadap keseluruhan `y` dan `hist_preds`
-            actual = np.array(y, dtype=float)
-            pred = np.array(hist_preds, dtype=float)
+            # Hitung error hanya pada DATA TESTING (setelah split_idx)
+            # Ini yang benar secara statistik: evaluasi model pada data yang TIDAK dipakai training
+            actual_test = np.array(y[split_idx:], dtype=float)
+            pred_test = np.array(hist_preds[split_idx:], dtype=float)
             
-            mask = actual > 0
-            act_m = actual[mask]
-            pred_m = pred[mask]
+            mask = actual_test > 0
+            act_m = actual_test[mask]
+            pred_m = pred_test[mask]
             
             if len(act_m) > 0:
                 errors_t = act_m - pred_m
@@ -1109,23 +1109,15 @@ def run_model(p, d, q, horizon, tanggal_awal=None, tanggal_akhir=None, split_rat
             rmse_val = rmse_80
             n_train = split_idx_80
             n_test = n - split_idx_80
-            
-            # --- HARDCODE EVALUASI KHUSUS 80:20 SIDANG ---
-            if p == 1 and d == 0 and q == 1:
-                mae_val = 840.16
-                rmse_val = 1065.509
-                mape_val = 11.01
 
-        # Rata-rata data - DIUBAH KE RATA-RATA SELURUH DATA AGAR SESUAI EXCEL
-        avg_actual = float(y.mean()) if len(y) > 0 else 1.0
+        # Rata-rata data testing untuk menghitung persentase
+        if split_ratio == '70:30':
+            avg_actual = float(np.mean(y[split_idx_70:])) if (n - split_idx_70) > 0 else 1.0
+        else:
+            avg_actual = float(np.mean(y[split_idx_80:])) if (n - split_idx_80) > 0 else 1.0
 
         mae_percent  = (mae_val  / avg_actual * 100) if avg_actual else 0.0
         rmse_percent = (rmse_val / avg_actual * 100) if avg_actual else 0.0
-        
-        # --- HARDCODE PERCENTAGE KHUSUS 80:20 SIDANG ---
-        if split_ratio == '80:20' and p == 1 and d == 0 and q == 1:
-            mae_percent = 9.46
-            rmse_percent = 11.99
 
         y_arr  = np.array(y, dtype=float)
         ae     = np.abs(y_arr - hist_preds)
